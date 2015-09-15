@@ -1,5 +1,5 @@
 Package.describe({
-  summary: "Reactive server-side MongoDB queries",
+  summary: "Reactive publish endpoints",
   version: '0.1.0',
   name: 'peerlibrary:reactive-publish',
   git: 'https://github.com/peerlibrary/meteor-reactive-publish.git'
