@@ -27,11 +27,11 @@ if Meteor.isServer
     ).observeChanges
       added: (id, fields) =>
         fields.dummyField = true
-        @added 'Posts_meteor_reactive_publish_tests', id, fields
+        @added 'Posts_meteor_reactivepublish_tests', id, fields
       changed: (id, fields) =>
-        @changed 'Posts_meteor_reactive_publish_tests', id, fields
+        @changed 'Posts_meteor_reactivepublish_tests', id, fields
       removed: (id) =>
-        @removed 'Posts_meteor_reactive_publish_tests', id
+        @removed 'Posts_meteor_reactivepublish_tests', id
 
     @ready()
 
@@ -133,6 +133,8 @@ class ReactivePublishTestCase extends ClassyTestCase
           @assertFalse error, error?.toString?() or error
           @assertTrue id
           @posts.push id
+
+      Meteor.setTimeout @expect(), 100 # ms
   ,
     ->
       @assertEqual Posts.find().fetch(), []
@@ -146,6 +148,8 @@ class ReactivePublishTestCase extends ClassyTestCase
           @assertFalse error, error?.toString?() or error
           @assertTrue userId
           @assertEqual userId, @userId
+
+      Meteor.setTimeout @expect(), 100 # ms
   ,
     ->
       Posts.find().forEach (post) =>
@@ -161,6 +165,8 @@ class ReactivePublishTestCase extends ClassyTestCase
         @expect (error, count) =>
           @assertFalse error, error?.toString?() or error
           @assertEqual count, 1
+
+      Meteor.setTimeout @expect(), 100 # ms
   ,
     ->
       Posts.find().forEach (post) =>
@@ -174,6 +180,8 @@ class ReactivePublishTestCase extends ClassyTestCase
         @expect (error, count) =>
           @assertFalse error, error?.toString?() or error
           @assertEqual count, 1
+
+      Meteor.setTimeout @expect(), 100 # ms
   ,
     ->
       @assertItemsEqual _.pluck(Posts.find().fetch(), '_id'), []
@@ -185,6 +193,8 @@ class ReactivePublishTestCase extends ClassyTestCase
         @expect (error, count) =>
           @assertFalse error, error?.toString?() or error
           @assertEqual count, 1
+
+      Meteor.setTimeout @expect(), 100 # ms
   ,
     ->
       Posts.find().forEach (post) =>
@@ -195,6 +205,8 @@ class ReactivePublishTestCase extends ClassyTestCase
       Posts.remove @posts[0], @expect (error, count) =>
         @assertFalse error, error?.toString?() or error
         @assertEqual count, 1
+
+      Meteor.setTimeout @expect(), 100 # ms
   ,
     ->
       Posts.find().forEach (post) =>
@@ -205,6 +217,8 @@ class ReactivePublishTestCase extends ClassyTestCase
       Users.remove @userId,
         @expect (error) =>
           @assertFalse error, error?.toString?() or error
+
+      Meteor.setTimeout @expect(), 100 # ms
   ,
     ->
       @assertItemsEqual _.pluck(Posts.find().fetch(), '_id'), []
@@ -230,6 +244,8 @@ class ReactivePublishTestCase extends ClassyTestCase
           @assertFalse error, error?.toString?() or error
           @assertTrue id
           @posts.push id
+
+      Meteor.setTimeout @expect(), 100 # ms
   ,
     ->
       @assertEqual Posts.find().fetch(), []
@@ -243,6 +259,8 @@ class ReactivePublishTestCase extends ClassyTestCase
           @assertFalse error, error?.toString?() or error
           @assertTrue userId
           @assertEqual userId, @userId
+
+      Meteor.setTimeout @expect(), 100 # ms
   ,
     ->
       Posts.find().forEach (post) =>
@@ -257,6 +275,8 @@ class ReactivePublishTestCase extends ClassyTestCase
         @expect (error, count) =>
           @assertFalse error, error?.toString?() or error
           @assertEqual count, 1
+
+      Meteor.setTimeout @expect(), 100 # ms
   ,
     ->
       Posts.find().forEach (post) =>
@@ -274,7 +294,6 @@ class ReactivePublishTestCase extends ClassyTestCase
           callback()
       @unsubscribeAll()
 
-      # Let's wait a but for subscription to really stop
       Meteor.setTimeout @expect(), 1000
   ,
     ->
@@ -310,6 +329,8 @@ class ReactivePublishTestCase extends ClassyTestCase
         @assertFalse error, error?.toString?() or error
         @assertTrue id
         @postId = id
+
+      Meteor.setTimeout @expect(), 100 # ms
   ,
     ->
       @assertEqual Posts.find().fetch(), []
@@ -322,6 +343,8 @@ class ReactivePublishTestCase extends ClassyTestCase
           @assertFalse error, error?.toString?() or error
           @assertTrue userId
           @assertEqual userId, @userId
+
+      Meteor.setTimeout @expect(), 100 # ms
   ,
     ->
       @assertItemsEqual Posts.find().fetch(), [
@@ -337,6 +360,8 @@ class ReactivePublishTestCase extends ClassyTestCase
         @expect (error, count) =>
           @assertFalse error, error?.toString?() or error
           @assertEqual count, 1
+
+      Meteor.setTimeout @expect(), 100 # ms
   ,
     ->
       @assertItemsEqual Posts.find().fetch(), [
@@ -352,6 +377,8 @@ class ReactivePublishTestCase extends ClassyTestCase
         @expect (error, count) =>
           @assertFalse error, error?.toString?() or error
           @assertEqual count, 1
+
+      Meteor.setTimeout @expect(), 100 # ms
   ,
     ->
       @assertItemsEqual Posts.find().fetch(), [
@@ -366,6 +393,8 @@ class ReactivePublishTestCase extends ClassyTestCase
         @expect (error, count) =>
           @assertFalse error, error?.toString?() or error
           @assertEqual count, 1
+
+      Meteor.setTimeout @expect(), 100 # ms
   ,
     ->
       @assertItemsEqual Posts.find().fetch(), [
@@ -381,6 +410,8 @@ class ReactivePublishTestCase extends ClassyTestCase
         @expect (error, count) =>
           @assertFalse error, error?.toString?() or error
           @assertEqual count, 1
+
+      Meteor.setTimeout @expect(), 100 # ms
   ,
     ->
       @assertItemsEqual Posts.find().fetch(), [
@@ -409,6 +440,8 @@ class ReactivePublishTestCase extends ClassyTestCase
           @assertFalse error, error?.toString?() or error
           @assertTrue id
           @addresses.push id
+
+      Meteor.setTimeout @expect(), 100 # ms
   ,
     ->
       @assertEqual Posts.find().fetch(), []
@@ -423,6 +456,8 @@ class ReactivePublishTestCase extends ClassyTestCase
           @assertFalse error, error?.toString?() or error
           @assertTrue userId
           @assertEqual userId, @userId
+
+      Meteor.setTimeout @expect(), 100 # ms
   ,
     ->
       @assertItemsEqual _.pluck(Posts.find().fetch(), '_id'), @posts
@@ -435,6 +470,8 @@ class ReactivePublishTestCase extends ClassyTestCase
         @expect (error, count) =>
           @assertFalse error, error?.toString?() or error
           @assertEqual count, 1
+
+      Meteor.setTimeout @expect(), 100 # ms
   ,
     ->
       @assertItemsEqual _.pluck(Posts.find().fetch(), '_id'), @posts[0..5]
@@ -447,6 +484,8 @@ class ReactivePublishTestCase extends ClassyTestCase
         @expect (error, count) =>
           @assertFalse error, error?.toString?() or error
           @assertEqual count, 1
+
+      Meteor.setTimeout @expect(), 100 # ms
   ,
     ->
       @assertItemsEqual _.pluck(Posts.find().fetch(), '_id'), @posts[0..5]
@@ -459,6 +498,8 @@ class ReactivePublishTestCase extends ClassyTestCase
         @expect (error, count) =>
           @assertFalse error, error?.toString?() or error
           @assertEqual count, 1
+
+      Meteor.setTimeout @expect(), 100 # ms
   ,
     ->
       @assertItemsEqual _.pluck(Posts.find().fetch(), '_id'), @posts[0..5]
@@ -467,6 +508,8 @@ class ReactivePublishTestCase extends ClassyTestCase
       Users.remove @userId, @expect (error, count) =>
         @assertFalse error, error?.toString?() or error
         @assertEqual count, 1
+
+      Meteor.setTimeout @expect(), 100 # ms
   ,
     ->
       @assertItemsEqual _.pluck(Posts.find().fetch(), '_id'), []

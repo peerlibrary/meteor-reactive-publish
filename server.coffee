@@ -31,7 +31,14 @@ Meteor.publish = (name, publishFunction) ->
           # (Meteor sends only a diff).
           if oldRelatedPublish?._documents[collectionName]?[stringId]
             Meteor._ensure(@_documents, collectionName)[stringId] = true
-            @changed collectionName, id, fields
+            oldFields = {}
+            # If some field existed before, but does not exist anymore, we have to remove it by calling "changed"
+            # with value set to "undefined". So we look into current session's state and see which fields are currently
+            # known and create an object of same fields, just all values set to "undefined". We then override some fields
+            # with new values. Only top-level fields matter.
+            for field of @_session.getCollectionView(collectionName)?.documents?[id]?.dataByKey or {}
+              oldFields[field] = undefined
+            @changed collectionName, id, _.extend oldFields, fields
           else
             relatedPublishAdded.call @, collectionName, id, fields
 
