@@ -42,6 +42,11 @@ Package.onTest(function (api) {
     'peerlibrary:reactive-publish'
   ]);
 
+  // 3rd party dependencies.
+  api.use([
+    'peerlibrary:classy-test@0.2.18'
+  ]);
+
   api.add_files([
     'tests.coffee'
   ]);
