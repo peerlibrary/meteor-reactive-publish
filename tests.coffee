@@ -13,93 +13,108 @@ if Meteor.isServer
         $in: ids
 
   Meteor.publish 'users-posts', (userId) ->
-    user = Users.findOne userId,
-      fields:
-        posts: 1
+    @autorun (computation) =>
+      user = Users.findOne userId,
+        fields:
+          posts: 1
 
-    fields = Fields.findOne userId
+      fields = Fields.findOne userId
 
-    Posts.find(
-      _id:
-        $in: user?.posts or []
-    ,
-      fields: _.omit (fields or {}), '_id'
-    ).observeChanges
-      added: (id, fields) =>
-        fields.dummyField = true
-        @added 'Posts_meteor_reactivepublish_tests', id, fields
-      changed: (id, fields) =>
-        @changed 'Posts_meteor_reactivepublish_tests', id, fields
-      removed: (id) =>
-        @removed 'Posts_meteor_reactivepublish_tests', id
+      Posts.find(
+        _id:
+          $in: user?.posts or []
+      ,
+        fields: _.omit (fields or {}), '_id'
+      ).observeChanges
+        added: (id, fields) =>
+          assert Tracker.active
+          fields.dummyField = true
+          @added 'Posts_meteor_reactivepublish_tests', id, fields
+        changed: (id, fields) =>
+          assert Tracker.active
+          @changed 'Posts_meteor_reactivepublish_tests', id, fields
+        removed: (id) =>
+          assert Tracker.active
+          @removed 'Posts_meteor_reactivepublish_tests', id
 
-    @ready()
+      @ready()
+
+    return
 
   Meteor.publish 'users-posts-and-addresses', (userId) ->
-    user1 = Users.findOne userId,
-      fields:
-        posts: 1
+    @autorun (computation) =>
+      user1 = Users.findOne userId,
+        fields:
+          posts: 1
 
-    user2 = Users.findOne userId,
-      fields:
-        addresses: 1
-
-    # TODO: Split.
-    [
       Posts.find(
         _id:
           $in: user1?.posts or []
       )
-    ,
+
+    @autorun (computation) =>
+      user2 = Users.findOne userId,
+        fields:
+          addresses: 1
+
       Addresses.find(
         _id:
           $in: user2?.addresses or []
       )
-    ]
+
+    return
 
   Meteor.publish 'users-posts-and-addresses-together', (userId) ->
-    user = Users.findOne userId,
-      fields:
-        posts: 1
-        addresses: 1
+    @autorun (computation) =>
+      user = Users.findOne userId,
+        fields:
+          posts: 1
+          addresses: 1
 
-    [
+      [
+        Posts.find(
+          _id:
+            $in: user?.posts or []
+        )
+      ,
+        Addresses.find(
+          _id:
+            $in: user?.addresses or []
+        )
+      ]
+
+    return
+
+  Meteor.publish 'users-posts-count', (userId, countId) ->
+    @autorun (computation) =>
+      user = Users.findOne userId,
+        fields:
+          posts: 1
+
+      count = 0
+      initializing = true
+
       Posts.find(
         _id:
           $in: user?.posts or []
-      )
-    ,
-      Addresses.find(
-        _id:
-          $in: user?.addresses or []
-      )
-    ]
+      ).observeChanges
+        added: (id) =>
+          assert Tracker.active
+          count++
+          @changed 'Counts', countId, count: count unless initializing
+        removed: (id) =>
+          assert Tracker.active
+          count--
+          @changed 'Counts', countId, count: count unless initializing
 
-  Meteor.publish 'users-posts-count', (userId, countId) ->
-    user = Users.findOne userId,
-      fields:
-        posts: 1
+      initializing = false
 
-    count = 0
-    initializing = true
+      @added 'Counts', countId,
+        count: count
 
-    Posts.find(
-      _id:
-        $in: user?.posts or []
-    ).observeChanges
-      added: (id) =>
-        count++
-        @changed 'Counts', countId, count: count unless initializing
-      removed: (id) =>
-        count--
-        @changed 'Counts', countId, count: count unless initializing
+      @ready()
 
-    initializing = false
-
-    @added 'Counts', countId,
-      count: count
-
-    @ready()
+    return
 
 class ReactivePublishTestCase extends ClassyTestCase
   @testName: 'reactivepublish'

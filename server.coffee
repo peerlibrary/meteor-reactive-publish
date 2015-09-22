@@ -4,87 +4,76 @@ Meteor.publish = (name, publishFunction) ->
   originalPublish name, (args...) ->
     publish = @
 
-    relatedPublish = null
+    oldDocuments = {}
+    documents = {}
+
+    publish._setAfterFlush = ->
+      computation = Tracker.currentComputation
+      unless computation._publishAfterFlushSet
+        computation._publishAfterFlushSet = true
+        Tracker.afterFlush =>
+          # We remove those which are not published anymore.
+          for collectionName of @_documents
+            currentlyPublishedDocumentIds = _.keys(@_documents[collectionName] or {})
+            currentComputationAddedDocumentIds = _.keys(documents[computation._id]?[collectionName] or {})
+            # If afterFlush for other autoruns in the publish function have not yet run, we have to look in "documents" as well.
+            otherComputationsAddedDocumentsIds = _.union (_.keys(docs[collectionName] or {}) for computationId, docs of documents when computationId isnt "#{computation._id}")...
+            # But after afterFlush, "documents" is empty to be ready for next rerun of the computation, so we look into "oldDocuments".
+            otherComputationsPreviouslyAddedDocumentsIds = _.union (_.keys(docs[collectionName] or {}) for computationId, docs of oldDocuments when computationId isnt "#{computation._id}")...
+
+            # We ignore IDs found in both otherComputationsAddedDocumentsIds and otherComputationsPreviouslyAddedDocumentsIds
+            # which might ignore more IDs then necessary (an ID might be previously added which has not been added in this
+            # iteration) but this is OK because in afterFlush of other computations this will be corrected and documents
+            # with those IDs removed.
+            for id in _.difference currentlyPublishedDocumentIds, currentComputationAddedDocumentIds, otherComputationsAddedDocumentsIds, otherComputationsPreviouslyAddedDocumentsIds
+              @removed collectionName, id
+
+          oldDocuments[computation._id] = documents[computation._id] or {}
+          documents[computation._id] = {}
+          computation._publishAfterFlushSet = false
+
+    originalAdded = publish.added
+    publish.added = (collectionName, id, fields) ->
+      stringId = @_idFilter.idStringify id
+      if Tracker.active
+        @_setAfterFlush()
+        Meteor._ensure(documents, Tracker.currentComputation._id, collectionName)[stringId] = true
+      # If document as already present in publish then we call changed to send updated fields (Meteor sends only a diff).
+      if @_documents[collectionName]?[stringId]
+        oldFields = {}
+        # If some field existed before, but does not exist anymore, we have to remove it by calling "changed"
+        # with value set to "undefined". So we look into current session's state and see which fields are currently
+        # known and create an object of same fields, just all values set to "undefined". We then override some fields
+        # with new values. Only top-level fields matter.
+        for field of @_session.getCollectionView(collectionName)?.documents?[id]?.dataByKey or {}
+          oldFields[field] = undefined
+        @changed collectionName, id, _.extend oldFields, fields
+      else
+        originalAdded.call @, collectionName, id, fields
+
     ready = false
 
-    publishDocuments = ->
-      oldRelatedPublish = relatedPublish
+    originalReady = publish.ready
+    publish.ready = ->
+      @_setAfterFlush() if Tracker.active
+      # Mark it as ready only the first time
+      originalReady.call @ unless ready
+      ready = true
+      # To return nothing.
+      return
 
-      Tracker.nonreactive =>
-        relatedPublish = publish._recreate()
+    handles = []
+    publish.autorun = (runFunc) ->
+      handle = Tracker.autorun (computation) ->
+        result = runFunc computation
 
-        # We copy overridden methods if they exist
-        for own key, value of publish when key in ['added', 'changed', 'removed', 'ready', 'stop', 'error']
-          relatedPublish[key] = value
+        publishHandlerResult publish, result unless publish._isDeactivated()
 
-        # If there are any extra fields which do not exist in recreated related publish
-        # (because they were added by some other code), copy them over
-        # TODO: This copies also @related, test how recursive @related works
-        for own key, value of publish when key not of relatedPublish
-          relatedPublish[key] = value
-
-        relatedPublishAdded = relatedPublish.added
-        relatedPublish.added = (collectionName, id, fields) ->
-          stringId = @_idFilter.idStringify id
-          # If document as already present in oldRelatedPublish then we just set
-          # relatedPublish's _documents and call changed to send updated fields
-          # (Meteor sends only a diff).
-          if oldRelatedPublish?._documents[collectionName]?[stringId]
-            Meteor._ensure(@_documents, collectionName)[stringId] = true
-            oldFields = {}
-            # If some field existed before, but does not exist anymore, we have to remove it by calling "changed"
-            # with value set to "undefined". So we look into current session's state and see which fields are currently
-            # known and create an object of same fields, just all values set to "undefined". We then override some fields
-            # with new values. Only top-level fields matter.
-            for field of @_session.getCollectionView(collectionName)?.documents?[id]?.dataByKey or {}
-              oldFields[field] = undefined
-            @changed collectionName, id, _.extend oldFields, fields
-          else
-            relatedPublishAdded.call @, collectionName, id, fields
-
-        relatedPublish.ready = ->
-          # Mark it as ready only the first time
-          publish.ready() unless ready
-          ready = true
-          # To return nothing.
-          return
-
-        relatedPublish.stop = (relatedChange) ->
-          if relatedChange
-            # We only deactivate (which calls stop callbacks as well) because we
-            # have manually removed only documents which are not published again.
-            @_deactivate()
-          else
-            # We do manually what would _stopSubscription do, but without
-            # subscription handling. This should be done by the parent publish.
-            @_removeAllDocuments()
-            @_deactivate()
-            publish.stop()
-          # To return nothing.
-          return
-
-      relatedPublish._handler = publishFunction
-      relatedPublish._runHandler()
-
-      return unless oldRelatedPublish
-
-      Tracker.nonreactive =>
-        # We remove those which are not published anymore
-        for collectionName in _.keys(oldRelatedPublish._documents)
-          for id in _.difference _.keys(oldRelatedPublish._documents[collectionName] or {}), _.keys(relatedPublish._documents[collectionName] or {})
-            oldRelatedPublish.removed collectionName, id
-
-        oldRelatedPublish.stop true
-        oldRelatedPublish = null
-
-    handle = Tracker.autorun (computation) =>
-      publishDocuments()
+      handles.push handle
+      handle
 
     publish.onStop ->
-      handle?.stop()
-      handle = null
-      relatedPublish?.stop()
-      relatedPublish = null
+      while handle = handles.pop()
+        handle.stop()
 
-    # To return nothing.
-    return
+    publishFunction.apply publish, args

@@ -22,6 +22,7 @@ Package.onUse(function (api) {
   ], 'server');
 
   api.addFiles([
+    'publish.js',
     'server.coffee'
   ], 'server');
 });
@@ -44,6 +45,8 @@ Package.onTest(function (api) {
 
   // 3rd party dependencies.
   api.use([
+    'peerlibrary:assert@0.2.5',
+    'peerlibrary:server-autorun@0.2.2',
     'peerlibrary:classy-test@0.2.18'
   ]);
 
