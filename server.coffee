@@ -1,4 +1,31 @@
+Fiber = Npm.require 'fibers'
+
 originalPublish = Meteor.publish
+
+originalObserveChanges = MongoInternals.Connection::_observeChanges
+MongoInternals.Connection::_observeChanges = (cursorDescription, ordered, callbacks) ->
+  initializing = true
+
+  if Tracker.active
+    Meteor._nodeCodeMustBeInFiber()
+    currentComputation = Tracker.currentComputation
+    callbacks = _.clone callbacks
+    for callbackName, callback of callbacks
+      do (callbackName, callback) ->
+        callbacks[callbackName] = (args...) ->
+          if initializing
+            previousPublishComputation = Fiber.current._publishComputation
+            Fiber.current._publishComputation = currentComputation
+            try
+              callback.apply null, args
+            finally
+              Fiber.current._publishComputation = previousPublishComputation
+          else
+            callback.apply null, args
+
+  handle = originalObserveChanges.call @, cursorDescription, ordered, callbacks
+  initializing = false
+  handle
 
 Meteor.publish = (name, publishFunction) ->
   originalPublish name, (args...) ->
@@ -7,11 +34,11 @@ Meteor.publish = (name, publishFunction) ->
     oldDocuments = {}
     documents = {}
 
-    publish._setAfterFlush = ->
-      computation = Tracker.currentComputation
+    publish._setAfterFlush = (computation) ->
       unless computation._publishAfterFlushSet
         computation._publishAfterFlushSet = true
-        Tracker.afterFlush =>
+
+        computation._trackerInstance.afterFlushCallbacks.push =>
           # We remove those which are not published anymore.
           for collectionName of @_documents
             currentlyPublishedDocumentIds = _.keys(@_documents[collectionName] or {})
@@ -32,12 +59,19 @@ Meteor.publish = (name, publishFunction) ->
           documents[computation._id] = {}
           computation._publishAfterFlushSet = false
 
+        computation._trackerInstance.requireFlush()
+
     originalAdded = publish.added
     publish.added = (collectionName, id, fields) ->
       stringId = @_idFilter.idStringify id
+
       if Tracker.active
-        @_setAfterFlush()
-        Meteor._ensure(documents, Tracker.currentComputation._id, collectionName)[stringId] = true
+        currentComputation = Tracker.currentComputation
+      else
+        currentComputation = Fiber.current._publishComputation
+      if currentComputation
+        @_setAfterFlush currentComputation
+        Meteor._ensure(documents, currentComputation._id, collectionName)[stringId] = true
       # If document as already present in publish then we call changed to send updated fields (Meteor sends only a diff).
       if @_documents[collectionName]?[stringId]
         oldFields = {}
@@ -55,7 +89,13 @@ Meteor.publish = (name, publishFunction) ->
 
     originalReady = publish.ready
     publish.ready = ->
-      @_setAfterFlush() if Tracker.active
+      if Tracker.active
+        currentComputation = Tracker.currentComputation
+      else
+        currentComputation = Fiber.current._publishComputation
+      if currentComputation
+        @_setAfterFlush currentComputation
+
       # Mark it as ready only the first time
       originalReady.call @ unless ready
       ready = true

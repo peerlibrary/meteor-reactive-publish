@@ -27,14 +27,14 @@ if Meteor.isServer
         fields: _.omit (fields or {}), '_id'
       ).observeChanges
         added: (id, fields) =>
-          assert Tracker.active
+          assert not Tracker.active
           fields.dummyField = true
           @added 'Posts_meteor_reactivepublish_tests', id, fields
         changed: (id, fields) =>
-          assert Tracker.active
+          assert not Tracker.active
           @changed 'Posts_meteor_reactivepublish_tests', id, fields
         removed: (id) =>
-          assert Tracker.active
+          assert not Tracker.active
           @removed 'Posts_meteor_reactivepublish_tests', id
 
       @ready()
@@ -99,11 +99,11 @@ if Meteor.isServer
           $in: user?.posts or []
       ).observeChanges
         added: (id) =>
-          assert Tracker.active
+          assert not Tracker.active
           count++
           @changed 'Counts', countId, count: count unless initializing
         removed: (id) =>
-          assert Tracker.active
+          assert not Tracker.active
           count--
           @changed 'Counts', countId, count: count unless initializing
 
