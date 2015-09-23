@@ -13,7 +13,7 @@ if Meteor.isServer
         $in: ids
 
   Meteor.publish 'users-posts', (userId) ->
-    @autorun (computation) =>
+    handle = Tracker.autorun (computation) =>
       user = Users.findOne userId,
         fields:
           posts: 1
@@ -38,6 +38,10 @@ if Meteor.isServer
           @removed 'Posts_meteor_reactivepublish_tests', id
 
       @ready()
+
+    @onStop =>
+      handle?.stop()
+      handle = null
 
     return
 
