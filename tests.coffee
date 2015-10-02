@@ -18,13 +18,13 @@ if Meteor.isServer
         fields:
           posts: 1
 
-      fields = Fields.findOne userId
+      projectedField = Fields.findOne userId
 
       Posts.find(
         _id:
           $in: user?.posts or []
       ,
-        fields: _.omit (fields or {}), '_id'
+        fields: _.omit (projectedField or {}), '_id'
       ).observeChanges
         added: (id, fields) =>
           assert not Tracker.active
@@ -51,17 +51,44 @@ if Meteor.isServer
         fields:
           posts: 1
 
-      fields = Fields.findOne userId
+      projectedField = Fields.findOne userId
 
       Posts.find(
         _id:
           $in: user?.posts or []
       ,
-        fields: _.omit (fields or {}), '_id'
+        fields: _.omit (projectedField or {}), '_id'
       ).forEach (document, i, cursor) =>
         fields = _.omit document, '_id'
         fields.dummyField = true
         @added 'Posts_meteor_reactivepublish_tests', document._id, fields
+
+      @ready()
+
+    @onStop =>
+      handle?.stop()
+      handle = null
+
+    return
+
+  Meteor.publish 'users-posts-autorun', (userId) ->
+    handle = Tracker.autorun (computation) =>
+      user = Users.findOne userId,
+        fields:
+          posts: 1
+
+      projectedField = Fields.findOne userId
+
+      Tracker.autorun (computation) =>
+        Posts.find(
+          _id:
+            $in: user?.posts or []
+        ,
+          fields: _.omit (projectedField or {}), '_id'
+        ).forEach (document, i, cursor) =>
+          fields = _.omit document, '_id'
+          fields.dummyField = true
+          @added 'Posts_meteor_reactivepublish_tests', document._id, fields
 
       @ready()
 
@@ -304,6 +331,8 @@ class ReactivePublishTestCase extends ClassyTestCase
 
   testClientBasicForeach: @basic 'users-posts-foreach'
 
+  testClientBasicAutorun: @basic 'users-posts-autorun'
+
   @unsubscribing: (publishName) -> [
     ->
       @userId = Random.id()
@@ -388,6 +417,8 @@ class ReactivePublishTestCase extends ClassyTestCase
   testClientUnsubscribing: @unsubscribing 'users-posts'
 
   testClientUnsubscribingForeach: @unsubscribing 'users-posts-foreach'
+
+  testClientUnsubscribingAutorun: @unsubscribing 'users-posts-autorun'
 
   @removeField: (publishName) -> [
     ->
@@ -506,6 +537,8 @@ class ReactivePublishTestCase extends ClassyTestCase
   testClientRemoveField: @removeField 'users-posts'
 
   testClientRemoveFieldForeach: @removeField 'users-posts-foreach'
+
+  testClientRemoveFieldAutorun: @removeField 'users-posts-autorun'
 
   @multiple: (publishName) -> [
     ->
