@@ -304,12 +304,12 @@ class ReactivePublishTestCase extends ClassyTestCase
 
   testClientBasicForeach: @basic 'users-posts-foreach'
 
-  testClientUnsubscribing: [
+  @unsubscribing: (publishName) -> [
     ->
       @userId = Random.id()
       @countId = Random.id()
 
-      @assertSubscribeSuccessful 'users-posts', @userId, @expect()
+      @assertSubscribeSuccessful publishName, @userId, @expect()
       @assertSubscribeSuccessful 'users-posts-count', @userId, @countId, @expect()
   ,
     ->
@@ -385,11 +385,15 @@ class ReactivePublishTestCase extends ClassyTestCase
       @postsSubscribe.stop()
   ]
 
-  testClientRemoveField: [
+  testClientUnsubscribing: @unsubscribing 'users-posts'
+
+  testClientUnsubscribingForeach: @unsubscribing 'users-posts-foreach'
+
+  @removeField: (publishName) -> [
     ->
       @userId = Random.id()
 
-      @assertSubscribeSuccessful 'users-posts', @userId, @expect()
+      @assertSubscribeSuccessful publishName, @userId, @expect()
   ,
     ->
       @assertEqual Posts.find().fetch(), []
@@ -498,6 +502,10 @@ class ReactivePublishTestCase extends ClassyTestCase
         dummyField: true
       ]
   ]
+
+  testClientRemoveField: @removeField 'users-posts'
+
+  testClientRemoveFieldForeach: @removeField 'users-posts-foreach'
 
   @multiple: (publishName) -> [
     ->
