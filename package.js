@@ -35,7 +35,9 @@ Package.onTest(function (api) {
     'coffeescript',
     'insecure',
     'random',
-    'underscore'
+    'underscore',
+    'reactive-var',
+    'check'
   ]);
 
   // Internal dependencies.

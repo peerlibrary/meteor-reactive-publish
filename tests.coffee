@@ -120,6 +120,36 @@ if Meteor.isServer
 
     return
 
+  currentTime = new ReactiveVar new Date().valueOf()
+
+  Meteor.setInterval ->
+    currentTime.set new Date().valueOf()
+  , 50 # ms
+
+  Meteor.publish 'recent-posts', ->
+    @autorun (computation) =>
+      timestamp = currentTime.get() - 2000 # ms
+
+      Posts.find(
+        timestamp:
+          $exists: true
+          $gte: timestamp
+      ,
+        sort:
+          timestamp: 1
+      )
+
+    return
+
+  # We use our own insert method to not have latency compensation so that observeChanges
+  # on the client really matches how databases changes on the server.
+  Meteor.methods
+    'insertPost': (timestamp) ->
+      check timestamp, Number
+
+      Posts.insert
+        timestamp: timestamp
+
 class ReactivePublishTestCase extends ClassyTestCase
   @testName: 'reactivepublish'
 
@@ -548,6 +578,92 @@ class ReactivePublishTestCase extends ClassyTestCase
 
       @assertSubscribeSuccessful 'users-posts-and-addresses-together', @userId, @expect()
   ].concat @multiple
+
+  testClientReactiveTime: [
+    ->
+      @assertSubscribeSuccessful 'recent-posts', @expect()
+
+      @changes = []
+
+      @handle = Posts.find(
+        timestamp:
+          $exists: true
+      ).observeChanges
+        added: (id, fields) =>
+          @changes.push {added: id, timestamp: new Date().valueOf()}
+        changes: (id, fields) =>
+          @assertFail()
+        removed: (id) =>
+          @changes.push {removed: id, timestamp: new Date().valueOf()}
+    ->
+      @assertEqual Posts.find(timestamp: $exists: true).fetch(), []
+
+      @posts = []
+
+      for i in [0...10]
+        timestamp =  new Date().valueOf() + i * 91 # ms
+        do (timestamp) =>
+          # We use a method to not have any client-side simulation which can
+          # interfere with the observation of the Posts collection.
+          Meteor.call 'insertPost', timestamp, @expect (error, id) =>
+            @assertFalse error, error?.toString?() or error
+            @assertTrue id
+            @posts.push
+              _id: id
+              timestamp: timestamp
+
+      # We have to wait for all posts to be inserted and pushed to the client.
+      Meteor.setTimeout @expect(), 300 # ms
+    ->
+      @posts = _.sortBy @posts, 'timestamp'
+
+      @assertEqual Posts.find(
+        timestamp:
+          $exists: true
+      ,
+        sort:
+          timestamp: 1
+      ).fetch(), @posts
+
+      # We wait for 2000 ms for all documents to be removed, and then a bit more
+      # to make sure the publish endpoint gets synced to the client.
+      Meteor.setTimeout @expect(), 3000 # ms
+    ->
+      @assertEqual Posts.find(
+        timestamp:
+          $exists: true
+      ).fetch(), []
+
+      @assertEqual @changes.length, 20
+
+      # There should be first changes for adding, and then in the same order changes for removing.
+      postsId = _.pluck @posts, '_id'
+      @assertEqual _.map(@changes, (change) -> change.added or change.removed), postsId.concat postsId
+
+      addedTimestamps = (change.timestamp for change in @changes when change.added)
+      removedTimestamps = (change.timestamp for change in @changes when change.removed)
+
+      addedTimestamps.sort()
+      removedTimestamps.sort()
+
+      sum = (list) -> _.reduce list, ((memo, num) -> memo + num), 0
+
+      averageAdded = sum(addedTimestamps) / addedTimestamps.length
+      averageRemoved = sum(removedTimestamps) / removedTimestamps.length
+
+      # Removing starts after 2000 ms, so there should be at least this difference between averages.
+      @assertTrue averageAdded + 2000 < averageRemoved
+
+      removedDelta = 0
+
+      for removed, i in removedTimestamps when i < removedTimestamps.length - 1
+        removedDelta += removedTimestamps[i + 1] - removed
+
+      removedDelta /= removedTimestamps.length - 1
+
+      # Each removed is approximately 91 ms apart. So the average of deltas should be somewhere there.
+      @assertTrue removedDelta > 80
+  ]
 
 # Register the test case.
 ClassyTestCase.addTest new ReactivePublishTestCase()
