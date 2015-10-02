@@ -45,6 +45,32 @@ if Meteor.isServer
 
     return
 
+  Meteor.publish 'users-posts-foreach', (userId) ->
+    handle = Tracker.autorun (computation) =>
+      user = Users.findOne userId,
+        fields:
+          posts: 1
+
+      fields = Fields.findOne userId
+
+      Posts.find(
+        _id:
+          $in: user?.posts or []
+      ,
+        fields: _.omit (fields or {}), '_id'
+      ).forEach (document, i, cursor) =>
+        fields = _.omit document, '_id'
+        fields.dummyField = true
+        @added 'Posts_meteor_reactivepublish_tests', document._id, fields
+
+      @ready()
+
+    @onStop =>
+      handle?.stop()
+      handle = null
+
+    return
+
   Meteor.publish 'users-posts-and-addresses', (userId) ->
     @autorun (computation) =>
       user1 = Users.findOne userId,
@@ -163,12 +189,12 @@ class ReactivePublishTestCase extends ClassyTestCase
   setUpClient: ->
     @countsCollection ?= new Meteor.Collection 'Counts'
 
-  testClientBasic: [
+  @basic: (publishName) -> [
     ->
       @userId = Random.id()
       @countId = Random.id()
 
-      @assertSubscribeSuccessful 'users-posts', @userId, @expect()
+      @assertSubscribeSuccessful publishName, @userId, @expect()
       @assertSubscribeSuccessful 'users-posts-count', @userId, @countId, @expect()
   ,
     ->
@@ -273,6 +299,10 @@ class ReactivePublishTestCase extends ClassyTestCase
       @assertItemsEqual _.pluck(Posts.find().fetch(), '_id'), []
       @assertEqual @countsCollection.findOne(@countId)?.count, 0
   ]
+
+  testClientBasic: @basic 'users-posts'
+
+  testClientBasicForeach: @basic 'users-posts-foreach'
 
   testClientUnsubscribing: [
     ->
@@ -469,7 +499,11 @@ class ReactivePublishTestCase extends ClassyTestCase
       ]
   ]
 
-  @multiple: [
+  @multiple: (publishName) -> [
+    ->
+      @userId = Random.id()
+
+      @assertSubscribeSuccessful publishName, @userId, @expect()
     ->
       @assertEqual Posts.find().fetch(), []
       @assertEqual Addresses.find().fetch(), []
@@ -565,19 +599,9 @@ class ReactivePublishTestCase extends ClassyTestCase
       @assertItemsEqual _.pluck(Addresses.find().fetch(), '_id'), []
   ]
 
-  testClientMultiple: [
-    ->
-      @userId = Random.id()
+  testClientMultiple: @multiple 'users-posts-and-addresses'
 
-      @assertSubscribeSuccessful 'users-posts-and-addresses', @userId, @expect()
-  ].concat @multiple
-
-  testClientMultipleTogether: [
-    ->
-      @userId = Random.id()
-
-      @assertSubscribeSuccessful 'users-posts-and-addresses-together', @userId, @expect()
-  ].concat @multiple
+  testClientMultipleTogether: @multiple 'users-posts-and-addresses-together'
 
   testClientReactiveTime: [
     ->
