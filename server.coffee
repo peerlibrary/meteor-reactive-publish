@@ -71,6 +71,10 @@ Meteor.publish = (name, publishFunction) ->
         documents[computation._id] = {}
         computation._publishAfterFlushSet = false
 
+      computation.onStop =>
+        delete oldDocuments[computation._id]
+        delete documents[computation._id]
+
       computation._trackerInstance.requireFlush()
 
     originalAdded = publish.added
