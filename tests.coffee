@@ -701,9 +701,11 @@ class ReactivePublishTestCase extends ClassyTestCase
 
       @assertEqual @changes.length, 20
 
-      # There should be first changes for adding, and then in the same order changes for removing.
       postsId = _.pluck @posts, '_id'
-      @assertEqual _.map(@changes, (change) -> change.added or change.removed), postsId.concat postsId
+      # There should be first changes for adding, in possibly different order.
+      @assertItemsEqual (change.added for change in @changes when change.added), postsId
+      # And then in the known order changes for removing.
+      @assertEqual (change.removed for change in @changes when change.removed), postsId
 
       addedTimestamps = (change.timestamp for change in @changes when change.added)
       removedTimestamps = (change.timestamp for change in @changes when change.removed)
