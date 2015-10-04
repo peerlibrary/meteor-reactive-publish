@@ -98,6 +98,35 @@ if Meteor.isServer
 
     return
 
+  Meteor.publish 'users-posts-method', (userId) ->
+    handle = Tracker.autorun (computation) =>
+      {user, projectedField} = Meteor.call 'userAndProjection', userId
+
+      Posts.find(
+        _id:
+          $in: user?.posts or []
+      ,
+        fields: _.omit (projectedField or {}), '_id'
+      ).observeChanges
+        added: (id, fields) =>
+          assert not Tracker.active
+          fields.dummyField = true
+          @added 'Posts_meteor_reactivepublish_tests', id, fields
+        changed: (id, fields) =>
+          assert not Tracker.active
+          @changed 'Posts_meteor_reactivepublish_tests', id, fields
+        removed: (id) =>
+          assert not Tracker.active
+          @removed 'Posts_meteor_reactivepublish_tests', id
+
+      @ready()
+
+    @onStop =>
+      handle?.stop()
+      handle = null
+
+    return
+
   Meteor.publish 'users-posts-and-addresses', (userId) ->
     @autorun (computation) =>
       user1 = Users.findOne userId,
@@ -202,6 +231,15 @@ if Meteor.isServer
 
       Posts.insert
         timestamp: timestamp
+
+    'userAndProjection': (userId) ->
+      user = Users.findOne userId,
+        fields:
+          posts: 1
+
+      projectedField = Fields.findOne userId
+
+      {user, projectedField}
 
 class ReactivePublishTestCase extends ClassyTestCase
   @testName: 'reactivepublish'
@@ -333,6 +371,8 @@ class ReactivePublishTestCase extends ClassyTestCase
 
   testClientBasicAutorun: @basic 'users-posts-autorun'
 
+  testClientBasicMethod: @basic 'users-posts-method'
+
   @unsubscribing: (publishName) -> [
     ->
       @userId = Random.id()
@@ -419,6 +459,8 @@ class ReactivePublishTestCase extends ClassyTestCase
   testClientUnsubscribingForeach: @unsubscribing 'users-posts-foreach'
 
   testClientUnsubscribingAutorun: @unsubscribing 'users-posts-autorun'
+
+  testClientUnsubscribingMethod: @unsubscribing 'users-posts-method'
 
   @removeField: (publishName) -> [
     ->
@@ -539,6 +581,8 @@ class ReactivePublishTestCase extends ClassyTestCase
   testClientRemoveFieldForeach: @removeField 'users-posts-foreach'
 
   testClientRemoveFieldAutorun: @removeField 'users-posts-autorun'
+
+  testClientRemoveFieldMethod: @removeField 'users-posts-method'
 
   @multiple: (publishName) -> [
     ->
