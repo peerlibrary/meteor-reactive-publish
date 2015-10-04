@@ -113,6 +113,8 @@ which effectively denormalizes joins across many-to-many relations and allows di
 
 Feel free to make pull requests with optimizations.
 
+You should probably not have multiple `autorun`s inside the same publish function publishing the same collection. This package does not do anything special in this case and the last change to a document will be the one which is published. So if you are trying to make multiple `autorun`s each publish a different subset of fields this will not work as expected. It is really the same as you would call manually `addded`/`changed`/`removed`, only that it happens reactivelly in a more declarative way.
+
 Acknowledgments
 ---------------
 
