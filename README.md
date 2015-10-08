@@ -4,7 +4,7 @@ reactive-publish
 This Meteor smart package extends [publish endpoints](http://docs.meteor.com/#/full/meteor_publish)
 with support for reactivity so that you can use
 [server-side autorun](https://github.com/peerlibrary/meteor-server-autorun) inside a publish function.
- 
+
 After adding this package you can use server-side [Tracker.autorun](http://docs.meteor.com/#/full/tracker_autorun)
 inside your publish function and any published documents will be automatically correctly send to the client while your
 reactive computation will rerun when any dependency triggers invalidation. Only changes to documents between reruns
@@ -85,8 +85,8 @@ Meteor.publish('posts', function () {
 });
 ```
 
-Warnings
---------
+Discussion
+----------
 
 Adding this package to your [Meteor](http://www.meteor.com/) application will make all MongoDB queries
 reactive by default (you can still specify [`reactive: false`](http://docs.meteor.com/#/full/find) to
@@ -118,8 +118,18 @@ Feel free to make pull requests with optimizations.
 You should probably not have multiple `autorun`s inside the same publish function publishing the same collection.
 This package does not do anything special in this case and the last change to a document will be the one which is published.
 So if you are trying to make multiple `autorun`s each publish a different subset of fields this will not work as expected.
-It is really the same as you would call manually `addded`/`changed`/`removed`, only that it happens reactivelly in a more
-declarative way.
+It is really the same as you would call manually
+[`addded`](http://docs.meteor.com/#/full/publish_added)/[`changed`](http://docs.meteor.com/#/full/publish_changed)/[`removed`](http://docs.meteor.com/#/full/publish_removed),
+only that it happens reactively in a more declarative way.
+
+Note that calling [`onStop`](http://docs.meteor.com/#/full/publish_onstop) inside a reactive computation probably does
+not do what you want. It will register a callback to be called when the whole publication is stopped and if you are
+doing this inside an `autorun` this means that a new callback is registered every time the computation is rerun.
+Which can potentially add many callbacks. Moreover, they will be called only after the whole publication stops, and
+not between computation reruns. What you probably want is to use
+[`Tracker.onInvalidate`](http://docs.meteor.com/#/full/tracker_oninvalidate) which runs when the computation itself
+is invalidated or stopped. Do notice that for reactive queries and observes inside a computation it is not needed to
+free their resources by yourself because that will be done already automatically.
 
 Acknowledgments
 ---------------
