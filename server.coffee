@@ -38,7 +38,16 @@ Meteor.publish = (name, publishFunction) ->
     oldDocuments = {}
     documents = {}
 
-    publish._installCallbacks = (computation) ->
+    publish._installCallbacks = ->
+      if Tracker.active
+        computation = Tracker.currentComputation
+      else
+        # Computation can also be passed through current fiber in the case the "added" method is called
+        # from the observeChanges callback from an observeChanges called inside a reactive context.
+        computation = Fiber.current._publishComputation
+
+      return unless computation
+
       unless computation._publishOnStopSet
         computation._publishOnStopSet = true
 
@@ -72,19 +81,14 @@ Meteor.publish = (name, publishFunction) ->
 
         computation._trackerInstance.requireFlush()
 
+      computation
+
     originalAdded = publish.added
     publish.added = (collectionName, id, fields) ->
       stringId = @_idFilter.idStringify id
 
-      if Tracker.active
-        currentComputation = Tracker.currentComputation
-      else
-        # Computation can also be passed through current fiber in the case this "added" method is called
-        # from the observeChanges callback from an observeChanges called inside a reactive context.
-        currentComputation = Fiber.current._publishComputation
-      if currentComputation
-        @_installCallbacks currentComputation
-        Meteor._ensure(documents, currentComputation._id, collectionName)[stringId] = true
+      currentComputation = @_installCallbacks()
+      Meteor._ensure(documents, currentComputation._id, collectionName)[stringId] = true if currentComputation
 
       # If document as already present in publish then we call changed to send updated fields (Meteor sends only a diff).
       # This can hide some errors in publish functions if they one calls "added" on an existing document and we could
@@ -106,12 +110,7 @@ Meteor.publish = (name, publishFunction) ->
 
     originalReady = publish.ready
     publish.ready = ->
-      if Tracker.active
-        currentComputation = Tracker.currentComputation
-      else
-        currentComputation = Fiber.current._publishComputation
-      if currentComputation
-        @_installCallbacks currentComputation
+      @_installCallbacks()
 
       # Mark it as ready only the first time.
       originalReady.call @ unless ready
