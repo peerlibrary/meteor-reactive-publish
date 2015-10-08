@@ -38,44 +38,47 @@ Meteor.publish = (name, publishFunction) ->
     oldDocuments = {}
     documents = {}
 
-    publish._setAfterFlush = (computation) ->
-      return if computation._publishAfterFlushSet
-      computation._publishAfterFlushSet = true
+    publish._installCallbacks = (computation) ->
+      unless computation._publishOnStopSet
+        computation._publishOnStopSet = true
 
-      # We cannot really use Tracker.afterFlush here because we have to make sure afterFlush callback is called in
-      # the same fiber as current computation is being run. Otherwise if the current computation calls observeChanges,
-      # observeChanges callbacks are called in a different fiber, so when those callbacks call "added" publish method,
-      # it is as well called in a different fiber, and when that method calls "_setAfterFlush" method, Tracker.afterFlush
-      # would be called in a different fiber as well, which is not the same as the computation which is being run is in.
-      # This makes afterFlush be called every time after every "added" method call, instead after the whole current
-      # computation (because those are two different fibers) which breaks the behavior of the afterFlush callback which
-      # expects to be run after the whole computation finishes.
-      computation._trackerInstance.afterFlushCallbacks.push =>
-        # We remove those which are not published anymore.
-        for collectionName of @_documents
-          currentlyPublishedDocumentIds = _.keys(@_documents[collectionName] or {})
-          currentComputationAddedDocumentIds = _.keys(documents[computation._id]?[collectionName] or {})
-          # If afterFlush for other autoruns in the publish function have not yet run, we have to look in "documents" as well.
-          otherComputationsAddedDocumentsIds = _.union (_.keys(docs[collectionName] or {}) for computationId, docs of documents when computationId isnt "#{computation._id}")...
-          # But after afterFlush, "documents" is empty to be ready for next rerun of the computation, so we look into "oldDocuments".
-          otherComputationsPreviouslyAddedDocumentsIds = _.union (_.keys(docs[collectionName] or {}) for computationId, docs of oldDocuments when computationId isnt "#{computation._id}")...
+        computation.onStop =>
+          delete oldDocuments[computation._id]
+          delete documents[computation._id]
 
-          # We ignore IDs found in both otherComputationsAddedDocumentsIds and otherComputationsPreviouslyAddedDocumentsIds
-          # which might ignore more IDs then necessary (an ID might be previously added which has not been added in this
-          # iteration) but this is OK because in afterFlush of other computations this will be corrected and documents
-          # with those IDs removed.
-          for id in _.difference currentlyPublishedDocumentIds, currentComputationAddedDocumentIds, otherComputationsAddedDocumentsIds, otherComputationsPreviouslyAddedDocumentsIds
-            @removed collectionName, id
+      unless computation._publishAfterFlushSet
+        computation._publishAfterFlushSet = true
 
-        oldDocuments[computation._id] = documents[computation._id] or {}
-        documents[computation._id] = {}
-        computation._publishAfterFlushSet = false
+        # We cannot really use Tracker.afterFlush here because we have to make sure afterFlush callback is called in
+        # the same fiber as current computation is being run. Otherwise if the current computation calls observeChanges,
+        # observeChanges callbacks are called in a different fiber, so when those callbacks call "added" publish method,
+        # it is as well called in a different fiber, and when that method calls "_installCallbacks" method, Tracker.afterFlush
+        # would be called in a different fiber as well, which is not the same as the computation which is being run is in.
+        # This makes afterFlush be called every time after every "added" method call, instead after the whole current
+        # computation (because those are two different fibers) which breaks the behavior of the afterFlush callback which
+        # expects to be run after the whole computation finishes.
+        computation._trackerInstance.afterFlushCallbacks.push =>
+          # We remove those which are not published anymore.
+          for collectionName of @_documents
+            currentlyPublishedDocumentIds = _.keys(@_documents[collectionName] or {})
+            currentComputationAddedDocumentIds = _.keys(documents[computation._id]?[collectionName] or {})
+            # If afterFlush for other autoruns in the publish function have not yet run, we have to look in "documents" as well.
+            otherComputationsAddedDocumentsIds = _.union (_.keys(docs[collectionName] or {}) for computationId, docs of documents when computationId isnt "#{computation._id}")...
+            # But after afterFlush, "documents" is empty to be ready for next rerun of the computation, so we look into "oldDocuments".
+            otherComputationsPreviouslyAddedDocumentsIds = _.union (_.keys(docs[collectionName] or {}) for computationId, docs of oldDocuments when computationId isnt "#{computation._id}")...
 
-      computation.onStop =>
-        delete oldDocuments[computation._id]
-        delete documents[computation._id]
+            # We ignore IDs found in both otherComputationsAddedDocumentsIds and otherComputationsPreviouslyAddedDocumentsIds
+            # which might ignore more IDs then necessary (an ID might be previously added which has not been added in this
+            # iteration) but this is OK because in afterFlush of other computations this will be corrected and documents
+            # with those IDs removed.
+            for id in _.difference currentlyPublishedDocumentIds, currentComputationAddedDocumentIds, otherComputationsAddedDocumentsIds, otherComputationsPreviouslyAddedDocumentsIds
+              @removed collectionName, id
 
-      computation._trackerInstance.requireFlush()
+          oldDocuments[computation._id] = documents[computation._id] or {}
+          documents[computation._id] = {}
+          computation._publishAfterFlushSet = false
+
+        computation._trackerInstance.requireFlush()
 
     originalAdded = publish.added
     publish.added = (collectionName, id, fields) ->
@@ -88,7 +91,7 @@ Meteor.publish = (name, publishFunction) ->
         # from the observeChanges callback from an observeChanges called inside a reactive context.
         currentComputation = Fiber.current._publishComputation
       if currentComputation
-        @_setAfterFlush currentComputation
+        @_installCallbacks currentComputation
         Meteor._ensure(documents, currentComputation._id, collectionName)[stringId] = true
 
       # If document as already present in publish then we call changed to send updated fields (Meteor sends only a diff).
@@ -116,7 +119,7 @@ Meteor.publish = (name, publishFunction) ->
       else
         currentComputation = Fiber.current._publishComputation
       if currentComputation
-        @_setAfterFlush currentComputation
+        @_installCallbacks currentComputation
 
       # Mark it as ready only the first time.
       originalReady.call @ unless ready
