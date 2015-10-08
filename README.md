@@ -93,13 +93,15 @@ reactive by default (you can still specify [`reactive: false`](http://docs.meteo
 queries to disable reactivity for a specific query, or use
 [`Tracker.nonreactive`](http://docs.meteor.com/#/full/tracker_nonreactive)). It will also automatically enable
 [server-side autorun](https://github.com/peerlibrary/meteor-server-autorun). All this might break some existing
-server-side code which might not expect to be reactive.
+server-side code which might not expect to be reactive. Inspect locations where your code or packages you are using
+already (before using this package) call `Tracker.autorun` on the server. In most cases this occurs only in the code
+which is shared between client and server.
 
 While documents are send to the client only once and in later reruns of computations only changes are send,
 the server side still has to make a new query and compute a diff what to send for every rerun, so this approach
 is suitable for reactivity which is not common, but you still want to support it. For example, queries with
 reactive permission checks often will not change during the life-time of a query because permissions change rarely.
-But if they do, a user will see results reactively.
+But if they do, a user will see results reactively and immediately.
 
 Consider also optimizing your `autorun`s by splitting them into multiple `autorun`s or by nesting them. You can
 also use [computed fields](https://github.com/peerlibrary/meteor-computed-field) to minimize propagation of
@@ -113,7 +115,11 @@ which effectively denormalizes joins across many-to-many relations and allows di
 
 Feel free to make pull requests with optimizations.
 
-You should probably not have multiple `autorun`s inside the same publish function publishing the same collection. This package does not do anything special in this case and the last change to a document will be the one which is published. So if you are trying to make multiple `autorun`s each publish a different subset of fields this will not work as expected. It is really the same as you would call manually `addded`/`changed`/`removed`, only that it happens reactivelly in a more declarative way.
+You should probably not have multiple `autorun`s inside the same publish function publishing the same collection.
+This package does not do anything special in this case and the last change to a document will be the one which is published.
+So if you are trying to make multiple `autorun`s each publish a different subset of fields this will not work as expected.
+It is really the same as you would call manually `addded`/`changed`/`removed`, only that it happens reactivelly in a more
+declarative way.
 
 Acknowledgments
 ---------------
