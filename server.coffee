@@ -141,7 +141,8 @@ Meteor.publish = (name, publishFunction) ->
       handle
 
     publish.onStop ->
-      while handle = handles.pop()
-        handle.stop()
+      while handles.length
+        handle = handles.shift()
+        handle?.stop()
 
     publishFunction.apply publish, args
