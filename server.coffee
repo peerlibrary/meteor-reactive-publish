@@ -38,13 +38,18 @@ Meteor.publish = (name, publishFunction) ->
     oldDocuments = {}
     documents = {}
 
-    publish._installCallbacks = ->
+    publish._currentComputation = ->
       if Tracker.active
-        computation = Tracker.currentComputation
+        return Tracker.currentComputation
       else
         # Computation can also be passed through current fiber in the case the "added" method is called
         # from the observeChanges callback from an observeChanges called inside a reactive context.
-        computation = Fiber.current._publishComputation
+        return Fiber.current._publishComputation
+
+      null
+
+    publish._installCallbacks = ->
+      computation = @_currentComputation()
 
       return unless computation
 
@@ -81,13 +86,15 @@ Meteor.publish = (name, publishFunction) ->
 
         computation._trackerInstance.requireFlush()
 
-      computation
+      return
 
     originalAdded = publish.added
     publish.added = (collectionName, id, fields) ->
       stringId = @_idFilter.idStringify id
 
-      currentComputation = @_installCallbacks()
+      @_installCallbacks()
+
+      currentComputation = @_currentComputation()
       Meteor._ensure(documents, currentComputation._id, collectionName)[stringId] = true if currentComputation
 
       # If document as already present in publish then we call changed to send updated fields (Meteor sends only a diff).
