@@ -206,7 +206,8 @@ if Meteor.isServer
 
   Meteor.setInterval ->
     currentTime.set new Date().valueOf()
-  , 50 # ms
+    # Using 1 ms to stress-test the system. In practice you should be using a much larger interval.
+  , 1 # ms
 
   Meteor.publish 'recent-posts', ->
     @autorun (computation) =>
