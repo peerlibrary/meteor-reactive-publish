@@ -1,6 +1,6 @@
 Package.describe({
   summary: "Reactive publish endpoints",
-  version: '0.1.0',
+  version: '0.1.1',
   name: 'peerlibrary:reactive-publish',
   git: 'https://github.com/peerlibrary/meteor-reactive-publish.git'
 });
@@ -17,8 +17,8 @@ Package.onUse(function (api) {
 
   // 3rd party dependencies.
   api.use([
-    'peerlibrary:server-autorun@0.5.0',
-    'peerlibrary:reactive-mongo@0.1.0'
+    'peerlibrary:server-autorun@0.5.1',
+    'peerlibrary:reactive-mongo@0.1.1'
   ], 'server');
 
   api.addFiles([
@@ -48,8 +48,8 @@ Package.onTest(function (api) {
   // 3rd party dependencies.
   api.use([
     'peerlibrary:assert@0.2.5',
-    'peerlibrary:server-autorun@0.5.0',
-    'peerlibrary:classy-test@0.2.18'
+    'peerlibrary:server-autorun@0.5.1',
+    'peerlibrary:classy-test@0.2.19'
   ]);
 
   api.add_files([
