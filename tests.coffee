@@ -224,6 +224,21 @@ if Meteor.isServer
 
     return
 
+  Meteor.publish 'multiple-cursors-1', ->
+    @autorun (computation) =>
+      Posts.find()
+
+    @autorun (computation) =>
+      Posts.find()
+
+    return
+
+  Meteor.publish 'multiple-cursors-2', ->
+    @autorun (computation) =>
+      Posts.find()
+
+    Posts.find()
+
   # We use our own insert method to not have latency compensation so that observeChanges
   # on the client really matches how databases changes on the server.
   Meteor.methods
@@ -776,6 +791,15 @@ class ReactivePublishTestCase extends ClassyTestCase
       # Each removed is approximately 91 ms apart. So the average of deltas should be somewhere there.
       @assertTrue removedDelta > 80
   ]
+
+  testClientMultipleCursors: ->
+    @subscribe 'multiple-cursors-1',
+      onError: @expect =>
+        @assertTrue true
+
+    @subscribe 'multiple-cursors-2',
+      onError: @expect =>
+        @assertTrue true
 
 # Register the test case.
 ClassyTestCase.addTest new ReactivePublishTestCase()

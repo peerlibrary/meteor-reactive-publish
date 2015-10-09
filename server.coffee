@@ -11,7 +11,7 @@ checkNames = (publish, collectionNames, computation, result) ->
   collectionNames[computation._id] = resultNames if computation
 
   for computationId, names of collectionNames when not computation or computationId isnt "#{computation._id}"
-    for collectionName of names when collectionName in resultNames
+    for collectionName in names when collectionName in resultNames
       publish.error new Error "Multiple cursors for collection '#{collectionName}'"
       return false
 
