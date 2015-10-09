@@ -115,13 +115,6 @@ which effectively denormalizes joins across many-to-many relations and allows di
 
 Feel free to make pull requests with optimizations.
 
-You should probably not have multiple `autorun`s inside the same publish function publishing the same collection.
-This package does not do anything special in this case and the last change to a document will be the one which is published.
-So if you are trying to make multiple `autorun`s each publish a different subset of fields this will not work as expected.
-It is really the same as you would call manually
-[`addded`](http://docs.meteor.com/#/full/publish_added)/[`changed`](http://docs.meteor.com/#/full/publish_changed)/[`removed`](http://docs.meteor.com/#/full/publish_removed),
-only that it happens reactively in a more declarative way.
-
 Note that calling [`onStop`](http://docs.meteor.com/#/full/publish_onstop) inside a reactive computation probably does
 not do what you want. It will register a callback to be called when the whole publication is stopped and if you are
 doing this inside an `autorun` this means that a new callback is registered every time the computation is rerun.

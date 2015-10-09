@@ -1,6 +1,21 @@
 Fiber = Npm.require 'fibers'
 
-originalPublish = Meteor.publish
+checkNames = (publish, collectionNames, computation, result) ->
+  if result and _.isArray result
+    resultNames = (cursor._getCollectionName() for cursor in result when '_getCollectionName' of cursor)
+  else if result and '_getCollectionName' of result
+    resultNames = [result._getCollectionName()]
+  else
+    resultNames = []
+
+  collectionNames[computation._id] = resultNames if computation
+
+  for computationId, names of collectionNames when not computation or computationId isnt "#{computation._id}"
+    for collectionName of names when collectionName in resultNames
+      publish.error new Error "Multiple cursors for collection '#{collectionName}'"
+      return false
+
+  true
 
 originalObserveChanges = MongoInternals.Connection::_observeChanges
 MongoInternals.Connection::_observeChanges = (cursorDescription, ordered, callbacks) ->
@@ -31,12 +46,15 @@ MongoInternals.Connection::_observeChanges = (cursorDescription, ordered, callba
   initializing = false
   handle
 
+originalPublish = Meteor.publish
 Meteor.publish = (name, publishFunction) ->
   originalPublish name, (args...) ->
     publish = @
 
     oldDocuments = {}
     documents = {}
+
+    collectionNames = {}
 
     publish._currentComputation = ->
       if Tracker.active
@@ -133,6 +151,10 @@ Meteor.publish = (name, publishFunction) ->
       handle = Tracker.autorun (computation) ->
         result = runFunc computation
 
+        unless checkNames publish, collectionNames, computation, result
+          computation.stop()
+          return
+
         publishHandlerResult publish, result unless publish._isDeactivated()
 
       handles.push handle
@@ -143,4 +165,8 @@ Meteor.publish = (name, publishFunction) ->
         handle = handles.shift()
         handle?.stop()
 
-    publishFunction.apply publish, args
+    result = publishFunction.apply publish, args
+
+    return unless checkNames publish, collectionNames, null, result
+
+    result
