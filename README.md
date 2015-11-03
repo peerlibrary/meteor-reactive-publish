@@ -32,8 +32,9 @@ You can make a simple publish across an one-to-many relation:
 
 ```javascript
 Meteor.publish('subscribed-posts', function () {
-  this.autorun(function (computation) {
-    var user = User.findOne(this.userId, {fields: {subscribedPosts: 1}});
+  var publish = this;
+  publish.autorun(function (computation) {
+    var user = User.findOne(publish.userId, {fields: {subscribedPosts: 1}});
     
     return Posts.find({_id: {$in: user && user.subscribedPosts || []}});
   });
@@ -50,7 +51,8 @@ Meteor.setInterval(function () {
 }, 1000); // ms
 
 Meteor.publish('recent-posts', function () {
-  this.autorun(function (computation) {
+  var publish = this;
+  publish.autorun(function (computation) {
     return Posts.find({
       timestamp: {
         $exists: true,
@@ -69,8 +71,9 @@ You can make complicated but reactive permission checks. For example, support us
 
 ```javascript
 Meteor.publish('posts', function () {
-  this.autorun(function (computation) {
-    var user = User.findOne(this.userId, {fields: {groups: 1}});
+  var publish = this;
+  publish.autorun(function (computation) {
+    var user = User.findOne(publish.userId, {fields: {groups: 1}});
     
     return Posts.find({
       $or: [{
