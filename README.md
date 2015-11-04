@@ -13,8 +13,9 @@ You can use any source of reactivity, like [reactive server-side MongoDB queries
 and reactive variables.
 
 Publish function's `this` is extended with `this.autorun` which behaves the same as `Tracker.autorun`, but you can
-return a cursor of array of cursors you want to publish. Moreover, computation is automatically stopped when subscription
-is stopped. If you use `Tracker.autorun` you have to take care of this yourselves.
+return a cursor of array of cursors you want to publish, and `this` inside the computation function is bound to the
+publish context. Moreover, computation is automatically stopped when subscription is stopped. If you use
+`Tracker.autorun` you have to take care of this yourselves.
 
 Server side only.
 

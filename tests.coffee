@@ -128,7 +128,12 @@ if Meteor.isServer
     return
 
   Meteor.publish 'users-posts-and-addresses', (userId) ->
-    @autorun (computation) =>
+    self = @
+
+    @autorun (computation) ->
+      # To test that a computation is bound to the publish.
+      assert.equal @, self
+
       user1 = Users.findOne userId,
         fields:
           posts: 1

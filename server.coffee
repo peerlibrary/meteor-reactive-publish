@@ -149,7 +149,7 @@ Meteor.publish = (name, publishFunction) ->
     # and that you can return cursors from the function which would be automatically published.
     publish.autorun = (runFunc) ->
       handle = Tracker.autorun (computation) ->
-        result = runFunc computation
+        result = runFunc.call publish, computation
 
         unless checkNames publish, collectionNames, computation, result
           computation.stop()
