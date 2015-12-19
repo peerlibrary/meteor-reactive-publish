@@ -30,8 +30,6 @@ Package.onUse(function (api) {
 Package.onTest(function (api) {
   // Core dependencies.
   api.use([
-    'tinytest',
-    'test-helpers',
     'coffeescript',
     'insecure',
     'random',
@@ -49,7 +47,7 @@ Package.onTest(function (api) {
   api.use([
     'peerlibrary:assert@0.2.5',
     'peerlibrary:server-autorun@0.5.1',
-    'peerlibrary:classy-test@0.2.19'
+    'peerlibrary:classy-test@0.2.20'
   ]);
 
   api.add_files([
