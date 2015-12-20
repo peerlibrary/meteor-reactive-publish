@@ -35,7 +35,8 @@ Package.onTest(function (api) {
     'random',
     'underscore',
     'reactive-var',
-    'check'
+    'check',
+    'mongo'
   ]);
 
   // Internal dependencies.

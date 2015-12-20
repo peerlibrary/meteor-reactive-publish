@@ -1,7 +1,7 @@
-Users = new Meteor.Collection 'Users_meteor_reactivepublish_tests'
-Posts = new Meteor.Collection 'Posts_meteor_reactivepublish_tests'
-Addresses = new Meteor.Collection 'Addresses_meteor_reactivepublish_tests'
-Fields = new Meteor.Collection 'Fields_meteor_reactivepublish_tests'
+Users = new Mongo.Collection 'Users_meteor_reactivepublish_tests'
+Posts = new Mongo.Collection 'Posts_meteor_reactivepublish_tests'
+Addresses = new Mongo.Collection 'Addresses_meteor_reactivepublish_tests'
+Fields = new Mongo.Collection 'Fields_meteor_reactivepublish_tests'
 
 if Meteor.isServer
   Meteor.publish null, ->
@@ -273,7 +273,7 @@ class ReactivePublishTestCase extends ClassyTestCase
     Fields.remove {}
 
   setUpClient: ->
-    @countsCollection ?= new Meteor.Collection 'Counts'
+    @countsCollection ?= new Mongo.Collection 'Counts'
 
   @basic: (publishName) -> [
     ->
