@@ -794,7 +794,7 @@ class ReactivePublishTestCase extends ClassyTestCase
       removedDelta /= removedTimestamps.length - 1
 
       # Each removed is approximately 91 ms apart. So the average of deltas should be somewhere there.
-      @assertTrue removedDelta > 80
+      @assertTrue removedDelta > 60, removedDelta
   ]
 
   testClientMultipleCursors: ->
