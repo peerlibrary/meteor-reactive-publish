@@ -113,8 +113,10 @@ Meteor.publish = (name, publishFunction) ->
             for id in _.difference currentlyPublishedDocumentIds, currentComputationAddedDocumentIds, otherComputationsAddedDocumentsIds, otherComputationsPreviouslyAddedDocumentsIds
               @removed collectionName, id
 
-          oldDocuments[computation._id] = documents[computation._id] or {}
-          documents[computation._id] = {}
+          computation.beforeRun =>
+            oldDocuments[computation._id] = documents[computation._id] or {}
+            documents[computation._id] = {}
+
           computation._publishAfterRunSet = false
 
         computation._trackerInstance.requireFlush()
