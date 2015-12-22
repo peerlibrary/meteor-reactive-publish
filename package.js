@@ -12,7 +12,8 @@ Package.onUse(function (api) {
   api.use([
     'coffeescript',
     'underscore',
-    'mongo'
+    'mongo',
+    'minimongo'
   ], 'server');
 
   // 3rd party dependencies.

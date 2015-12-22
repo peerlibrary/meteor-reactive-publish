@@ -17,10 +17,7 @@ checkNames = (publish, collectionNames, computation, result) ->
 
   true
 
-originalObserveChanges = MongoInternals.Connection::_observeChanges
-MongoInternals.Connection::_observeChanges = (cursorDescription, ordered, callbacks) ->
-  initializing = true
-
+wrapCallbacks = (callbacks, initializingReference) ->
   # If observeChanges is called inside a reactive context we have to make extra effort to pass the computation to the
   # observeChanges callbacks so that the computation is available to the "added" publish method, if it is called. We use
   # fiber object for that. observeChanges callbacks are not called in a reactive context. Additionally, we want this to
@@ -29,10 +26,10 @@ MongoInternals.Connection::_observeChanges = (cursorDescription, ordered, callba
     Meteor._nodeCodeMustBeInFiber()
     currentComputation = Tracker.currentComputation
     callbacks = _.clone callbacks
-    for callbackName, callback of callbacks
+    for callbackName, callback of callbacks when callbackName in ['added', 'changed', 'removed', 'addedBefore', 'movedBefore']
       do (callbackName, callback) ->
         callbacks[callbackName] = (args...) ->
-          if initializing
+          if initializingReference.initializing
             previousPublishComputation = Fiber.current._publishComputation
             Fiber.current._publishComputation = currentComputation
             try
@@ -42,7 +39,25 @@ MongoInternals.Connection::_observeChanges = (cursorDescription, ordered, callba
           else
             callback.apply null, args
 
+  callbacks
+
+originalObserveChanges = MongoInternals.Connection::_observeChanges
+MongoInternals.Connection::_observeChanges = (cursorDescription, ordered, callbacks) ->
+  initializing = true
+
+  callbacks = wrapCallbacks callbacks, initializing: initializing
+
   handle = originalObserveChanges.call @, cursorDescription, ordered, callbacks
+  initializing = false
+  handle
+
+originalLocalCollectionCursorObserveChanges = LocalCollection.Cursor::observeChanges
+LocalCollection.Cursor::observeChanges = (options) ->
+  initializing = true
+
+  options = wrapCallbacks options, initializing: initializing
+
+  handle = originalLocalCollectionCursorObserveChanges.call @, options
   initializing = false
   handle
 
