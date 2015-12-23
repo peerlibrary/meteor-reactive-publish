@@ -4,6 +4,10 @@ Addresses = new Mongo.Collection 'Addresses_meteor_reactivepublish_tests'
 Fields = new Mongo.Collection 'Fields_meteor_reactivepublish_tests'
 
 if Meteor.isServer
+  LocalCollection = new Mongo.Collection null
+
+  localCollectionLimit = new ReactiveVar null
+
   Meteor.publish null, ->
     Users.find()
 
@@ -244,16 +248,30 @@ if Meteor.isServer
 
     Posts.find()
 
+  Meteor.publish 'localCollection', ->
+    @autorun (computation) =>
+      LocalCollection.find({}, {sort: {i: 1}, limit: localCollectionLimit.get()}).observeChanges
+        addedBefore: (id, fields, before) =>
+          @added 'localCollection', id, fields
+        changed: (id, fields) =>
+          @changed 'localCollection', id, fields
+        removed: (id) =>
+          @removed 'localCollection', id
+
+      @ready()
+
+    return
+
   # We use our own insert method to not have latency compensation so that observeChanges
   # on the client really matches how databases changes on the server.
   Meteor.methods
-    'insertPost': (timestamp) ->
+    insertPost: (timestamp) ->
       check timestamp, Number
 
       Posts.insert
         timestamp: timestamp
 
-    'userAndProjection': (userId) ->
+    userAndProjection: (userId) ->
       user = Users.findOne userId,
         fields:
           posts: 1
@@ -261,6 +279,15 @@ if Meteor.isServer
       projectedField = Fields.findOne userId
 
       {user, projectedField}
+
+    setLocalCollectionLimit: (limit) ->
+      localCollectionLimit.set limit
+
+    insertLocalCollection: (doc) ->
+      LocalCollection.insert doc
+
+else
+  LocalCollection = new Mongo.Collection 'localCollection'
 
 class ReactivePublishTestCase extends ClassyTestCase
   @testName: 'reactivepublish'
@@ -805,6 +832,60 @@ class ReactivePublishTestCase extends ClassyTestCase
     @subscribe 'multiple-cursors-2',
       onError: @expect =>
         @assertTrue true
+
+  testClientLocalCollection: [
+    ->
+      Meteor.call 'setLocalCollectionLimit', 10, @expect (error) =>
+          @assertFalse error, error
+  ,
+    ->
+      @assertSubscribeSuccessful 'localCollection', @expect()
+  ,
+    ->
+      @assertEqual LocalCollection.find({}).fetch(), []
+
+      for i in [0...10]
+        Meteor.call 'insertLocalCollection', {i: i}, @expect (error, documentId) =>
+          @assertFalse error, error
+          @assertTrue documentId
+  ,
+    ->
+      # To wait a bit for change to propagate.
+      Meteor.setTimeout @expect(), 100 # ms
+  ,
+    ->
+      @assertEqual LocalCollection.find({}).count(), 10
+
+      Meteor.call 'setLocalCollectionLimit', 5, @expect (error) =>
+        @assertFalse error, error
+
+      # To wait a bit for change to propagate.
+      Meteor.setTimeout @expect(), 100 # ms
+  ,
+    ->
+      @assertEqual LocalCollection.find({}).count(), 5
+
+      for i in [0...10]
+        Meteor.call 'insertLocalCollection', {i: i}, @expect (error, documentId) =>
+          @assertFalse error, error
+          @assertTrue documentId
+  ,
+    ->
+      # To wait a bit for change to propagate.
+      Meteor.setTimeout @expect(), 100 # ms
+  ,
+    ->
+      @assertEqual LocalCollection.find({}).count(), 5
+
+      Meteor.call 'setLocalCollectionLimit', 15, @expect (error) =>
+        @assertFalse error, error
+
+      # To wait a bit for change to propagate.
+      Meteor.setTimeout @expect(), 100 # ms
+  ,
+    ->
+      @assertEqual LocalCollection.find({}).count(), 15
+  ]
 
 # Register the test case.
 ClassyTestCase.addTest new ReactivePublishTestCase()
