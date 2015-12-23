@@ -140,8 +140,8 @@ than what developers are used to for Meteor.
 * [meteor-publish-with-relations](https://github.com/tmeasday/meteor-publish-with-relations) – complicated custom API not
   allowing to reuse existing publish functions, which means no support for custom publish with `added`/`changed`/`removed`,
   no support for other reactive sources
-* [meteor-smart-publish](https://github.com/yeputons/meteor-smart-publish) – complicated way of defining dependencies
-  and works only with query cursors and not custom `added`/`changed`/`removed` functions or other reactive sources
+* [meteor-smart-publish](https://github.com/yeputons/meteor-smart-publish) – complicated custom way of defining
+  dependencies and works only with query cursors and not other reactive sources
 * [reywood:publish-composite](https://github.com/englue/meteor-publish-composite) – allow you to define a nested structure
   of cursors, which get documents from higher levels in a reactive manner, but it works only with only with query cursors
   and not custom `added`/`changed`/`removed` functions or other reactive sources
