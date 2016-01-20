@@ -289,6 +289,10 @@ if Meteor.isServer
 else
   LocalCollection = new Mongo.Collection 'localCollection'
 
+Meteor.methods
+  clearLocalCollection: ->
+    LocalCollection.remove {}
+
 class ReactivePublishTestCase extends ClassyTestCase
   @testName: 'reactivepublish'
 
@@ -835,8 +839,12 @@ class ReactivePublishTestCase extends ClassyTestCase
 
   testClientLocalCollection: [
     ->
+      Meteor.call 'clearLocalCollection', @expect (error) =>
+        @assertFalse error, error
+  ,
+    ->
       Meteor.call 'setLocalCollectionLimit', 10, @expect (error) =>
-          @assertFalse error, error
+        @assertFalse error, error
   ,
     ->
       @assertSubscribeSuccessful 'localCollection', @expect()
