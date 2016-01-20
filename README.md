@@ -26,6 +26,13 @@ Installation
 meteor add peerlibrary:reactive-publish
 ```
 
+Additional packages
+-------------------
+
+* [peerlibrary:subscription-data](https://github.com/peerlibrary/meteor-subscription-data) – Support for
+  reactive and shared subscription data context which allows you to change arguments to the publish function without
+  restarting it, and have a side channel to communicate metadata back to the subscriber as well
+
 Examples
 --------
 
