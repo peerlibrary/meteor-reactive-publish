@@ -47,10 +47,9 @@ if Meteor.isServer
       handle?.stop()
       handle = null
 
-    return
-
   Meteor.publish 'users-posts-foreach', (userId) ->
-    handle = Tracker.autorun (computation) =>
+    # Handle is being returned and stopped automatically.
+    Tracker.autorun (computation) =>
       user = Users.findOne userId,
         fields:
           posts: 1
@@ -69,14 +68,9 @@ if Meteor.isServer
 
       @ready()
 
-    @onStop =>
-      handle?.stop()
-      handle = null
-
-    return
-
   Meteor.publish 'users-posts-autorun', (userId) ->
-    handle = Tracker.autorun (computation) =>
+    # Handle is being returned and stopped automatically.
+    Tracker.autorun (computation) =>
       user = Users.findOne userId,
         fields:
           posts: 1
@@ -96,14 +90,9 @@ if Meteor.isServer
 
       @ready()
 
-    @onStop =>
-      handle?.stop()
-      handle = null
-
-    return
-
   Meteor.publish 'users-posts-method', (userId) ->
-    handle = Tracker.autorun (computation) =>
+    # Handle is being returned and stopped automatically.
+    Tracker.autorun (computation) =>
       {user, projectedField} = Meteor.call 'userAndProjection', userId
 
       Posts.find(
@@ -124,12 +113,6 @@ if Meteor.isServer
           @removed 'Posts_meteor_reactivepublish_tests', id
 
       @ready()
-
-    @onStop =>
-      handle?.stop()
-      handle = null
-
-    return
 
   Meteor.publish 'users-posts-and-addresses', (userId) ->
     self = @
@@ -157,8 +140,6 @@ if Meteor.isServer
           $in: user2?.addresses or []
       )
 
-    return
-
   Meteor.publish 'users-posts-and-addresses-together', (userId) ->
     @autorun (computation) =>
       user = Users.findOne userId,
@@ -177,8 +158,6 @@ if Meteor.isServer
             $in: user?.addresses or []
         )
       ]
-
-    return
 
   Meteor.publish 'users-posts-count', (userId, countId) ->
     @autorun (computation) =>
@@ -209,8 +188,6 @@ if Meteor.isServer
 
       @ready()
 
-    return
-
   currentTime = new ReactiveVar new Date().valueOf()
 
   Meteor.setInterval ->
@@ -231,16 +208,12 @@ if Meteor.isServer
           timestamp: 1
       )
 
-    return
-
   Meteor.publish 'multiple-cursors-1', ->
     @autorun (computation) =>
       Posts.find()
 
     @autorun (computation) =>
       Posts.find()
-
-    return
 
   Meteor.publish 'multiple-cursors-2', ->
     @autorun (computation) =>
@@ -259,8 +232,6 @@ if Meteor.isServer
           @removed 'localCollection', id
 
       @ready()
-
-    return
 
   # We use our own insert method to not have latency compensation so that observeChanges
   # on the client really matches how databases changes on the server.

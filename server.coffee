@@ -172,7 +172,14 @@ Meteor.publish = (name, publishFunction) ->
           computation.stop()
           return
 
-        publishHandlerResult publish, result unless publish._isDeactivated()
+        # Specially handle if computation has been returned.
+        if result instanceof Tracker.Computation
+          if publish._isDeactivated()
+            result.stop()
+          else
+            handles.push result
+        else
+          publishHandlerResult publish, result unless publish._isDeactivated()
 
       handles.push handle
       handle
@@ -186,4 +193,11 @@ Meteor.publish = (name, publishFunction) ->
 
     return unless checkNames publish, collectionNames, null, result
 
-    result
+    # Specially handle if computation has been returned.
+    if result instanceof Tracker.Computation
+      handles.push result
+      # Do not return anything.
+      return
+
+    else
+      result
