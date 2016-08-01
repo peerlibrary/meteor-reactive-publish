@@ -1,6 +1,6 @@
 Package.describe({
   summary: "Reactive publish endpoints",
-  version: '0.2.0',
+  version: '0.3.0',
   name: 'peerlibrary:reactive-publish',
   git: 'https://github.com/peerlibrary/meteor-reactive-publish.git'
 });
@@ -49,7 +49,7 @@ Package.onTest(function (api) {
   api.use([
     'peerlibrary:assert@0.2.5',
     'peerlibrary:server-autorun@0.5.1',
-    'peerlibrary:classy-test@0.2.20'
+    'peerlibrary:classy-test@0.2.26'
   ]);
 
   api.add_files([
