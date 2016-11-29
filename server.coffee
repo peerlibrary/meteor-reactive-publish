@@ -136,7 +136,7 @@ Meteor.publish = (name, publishFunction) ->
       # This can hide some errors in publish functions if they one calls "added" on an existing document and we could
       # make it so that this behavior works only inside reactive computation (if "currentComputation" is set), but we
       # can also make it so that publish function tries to do something smarter (sending a diff) in all cases, as we do.
-      if @_documents[collectionName]?[stringId]
+      if @_documents[collectionName]?[stringId] && @_session.getCollectionView
         oldFields = {}
         # If some field existed before, but does not exist anymore, we have to remove it by calling "changed"
         # with value set to "undefined". So we look into current session's state and see which fields are currently
