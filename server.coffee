@@ -61,9 +61,8 @@ LocalCollection.Cursor::observeChanges = (options) ->
   initializing = false
   handle
 
-originalPublish = Meteor.publish
-Meteor.publish = (name, publishFunction) ->
-  originalPublish name, (args...) ->
+extendPublish (name, publishFunction, options) ->
+  newPublishFunction = (args...) ->
     publish = @
 
     oldDocuments = {}
@@ -201,3 +200,5 @@ Meteor.publish = (name, publishFunction) ->
 
     else
       result
+
+  [name, newPublishFunction, options]

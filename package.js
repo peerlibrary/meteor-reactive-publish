@@ -19,7 +19,8 @@ Package.onUse(function (api) {
   // 3rd party dependencies.
   api.use([
     'peerlibrary:server-autorun@0.5.2',
-    'peerlibrary:reactive-mongo@0.1.1'
+    'peerlibrary:reactive-mongo@0.1.1',
+    'peerlibrary:extend-publish@0.3.0'
   ], 'server');
 
   api.addFiles([
