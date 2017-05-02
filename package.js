@@ -6,7 +6,7 @@ Package.describe({
 });
 
 Package.onUse(function (api) {
-  api.versionsFrom('METEOR@1.0.3.1');
+  api.versionsFrom('METEOR@1.3.4.4');
 
   // Core dependencies.
   api.use([
@@ -20,7 +20,7 @@ Package.onUse(function (api) {
   api.use([
     'peerlibrary:server-autorun@0.5.2',
     'peerlibrary:reactive-mongo@0.1.1',
-    'peerlibrary:extend-publish@0.3.0'
+    'peerlibrary:extend-publish@0.4.0'
   ], 'server');
 
   api.addFiles([
@@ -30,6 +30,8 @@ Package.onUse(function (api) {
 });
 
 Package.onTest(function (api) {
+  api.versionsFrom('METEOR@1.3.4.4');
+
   // Core dependencies.
   api.use([
     'coffeescript',
