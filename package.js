@@ -10,7 +10,7 @@ Package.onUse(function (api) {
 
   // Core dependencies.
   api.use([
-    'coffeescript',
+    'coffeescript@=2.0.3-2-rc161.0',
     'underscore',
     'mongo',
     'minimongo'
