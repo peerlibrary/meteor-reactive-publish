@@ -178,7 +178,7 @@ extendPublish (name, publishFunction, options) ->
           else
             handles.push result
         else
-          publishHandlerResult publish, result unless publish._isDeactivated()
+          publish._publishHandlerResult result unless publish._isDeactivated()
 
       handles.push handle
       handle
