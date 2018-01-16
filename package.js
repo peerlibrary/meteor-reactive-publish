@@ -19,8 +19,8 @@ Package.onUse(function (api) {
 
   // 3rd party dependencies.
   api.use([
-    'peerlibrary:server-autorun@0.7.0',
-    'peerlibrary:reactive-mongo@0.2.1',
+    'peerlibrary:server-autorun@0.7.1',
+    'peerlibrary:reactive-mongo@0.2.2',
     'peerlibrary:extend-publish@0.5.0'
   ], 'server');
 
@@ -52,7 +52,7 @@ Package.onTest(function (api) {
   // 3rd party dependencies.
   api.use([
     'peerlibrary:assert@0.2.5',
-    'peerlibrary:server-autorun@0.7.0',
+    'peerlibrary:server-autorun@0.7.1',
     'peerlibrary:classy-test@0.3.0'
   ]);
 
