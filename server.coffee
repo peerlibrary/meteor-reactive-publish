@@ -2,8 +2,8 @@ Fiber = Npm.require 'fibers'
 
 checkNames = (publish, collectionNames, computation, result) ->
   if result and _.isArray result
-    resultNames = (cursor._getCollectionName() for cursor in result when _.isObject cursor and '_getCollectionName' of cursor)
-  else if result and _.isObject result and '_getCollectionName' of result
+    resultNames = (cursor._getCollectionName() for cursor in result when _.isObject(cursor) and '_getCollectionName' of cursor)
+  else if result and _.isObject(result) and '_getCollectionName' of result
     resultNames = [result._getCollectionName()]
   else
     resultNames = []
