@@ -162,10 +162,12 @@ extendPublish (name, publishFunction, options) ->
       return
 
     handles = []
+    trackedComputations = []
     # This autorun is nothing special, just that it makes sure handles are stopped when publish stops,
     # and that you can return cursors from the function which would be automatically published.
     publish.autorun = (runFunc) ->
       handle = Tracker.autorun (computation) ->
+        trackedComputations.push computation
         result = runFunc.call publish, computation
 
         collectionNames = getCollectionNames result
@@ -194,6 +196,12 @@ extendPublish (name, publishFunction, options) ->
       while handles.length
         handle = handles.shift()
         handle?.stop()
+      # Stop computations in case a subscription is stopped before ready on the client and
+      # the publish is using meteorhacks:unblock's "this.unblock()". Without this, observers
+      # created from cursors inside the autorun will exist forever.
+      while trackedComputations.length
+        computation = trackedComputations.shift()
+        computation?.stop()
 
     result = publishFunction.apply publish, args
 
