@@ -53,7 +53,8 @@ Package.onTest(function (api) {
   api.use([
     'peerlibrary:assert@0.2.5',
     'peerlibrary:server-autorun@0.7.1',
-    'peerlibrary:classy-test@0.3.0'
+    'peerlibrary:classy-test@0.3.0',
+    'meteorhacks:unblock'
   ]);
 
   api.add_files([
