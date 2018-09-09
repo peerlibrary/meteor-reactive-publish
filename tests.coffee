@@ -1,3 +1,5 @@
+allCollections = []
+
 for idGeneration in ['STRING', 'MONGO']
   do (idGeneration) ->
     if idGeneration is 'STRING'
@@ -8,9 +10,13 @@ for idGeneration in ['STRING', 'MONGO']
         new Meteor.Collection.ObjectID()
 
     Users = new Mongo.Collection "Users_meteor_reactivepublish_tests_#{idGeneration}", {idGeneration}
+    allCollections.push Users
     Posts = new Mongo.Collection "Posts_meteor_reactivepublish_tests_#{idGeneration}", {idGeneration}
+    allCollections.push Posts
     Addresses = new Mongo.Collection "Addresses_meteor_reactivepublish_tests_#{idGeneration}", {idGeneration}
+    allCollections.push Addresses
     Fields = new Mongo.Collection "Fields_meteor_reactivepublish_tests_#{idGeneration}", {idGeneration}
+    allCollections.push Fields
 
     if Meteor.isServer
       LocalCollection = new Mongo.Collection null, {idGeneration}
@@ -243,6 +249,19 @@ for idGeneration in ['STRING', 'MONGO']
               @removed "localCollection_#{idGeneration}", id
 
           @ready()
+
+      Meteor.publish "unblocked-users-posts_#{idGeneration}", (userId) ->
+        @unblock()
+
+        @autorun (computation) =>
+          user = Users.findOne userId,
+            fields:
+              posts: 1
+
+          Posts.find(
+            _id:
+              $in: user?.posts or []
+          )
 
       methods = {}
       methods["insertPost_#{idGeneration}"] = (timestamp) ->
@@ -882,6 +901,32 @@ for idGeneration in ['STRING', 'MONGO']
         ->
           @assertEqual LocalCollection.find({}).count(), 15
       ]
+
+      multiplexerCountBefore = 0
+      multiplexerCountAfter = 0
+      @unblockedPub: (publishName) -> [
+        @runOnServer ->
+          multiplexerCountBefore = 0
+          for collection in allCollections
+            if collection
+              multiplexerCountBefore += Object.keys(collection._driver.mongo._observeMultiplexers).length
+        ->
+          @userId = generateId()
+          handle = @subscribe "#{publishName}_#{idGeneration}", @userId
+          subscriptionId = handle.subscriptionId
+          handle?.stop()
+
+          Meteor.setTimeout @expect(), 1000 # ms
+      ,
+        @runOnServer ->
+          multiplexerCountAfter = 0
+          for collection in allCollections
+            if collection
+              multiplexerCountAfter += Object.keys(collection._driver.mongo._observeMultiplexers).length
+          @assertEqual multiplexerCountBefore, multiplexerCountAfter
+      ]
+
+      testClientUnblockedBasicAutorun: @unblockedPub 'unblocked-users-posts'
 
     # Register the test case.
     ClassyTestCase.addTest new ReactivePublishTestCase()
