@@ -1,7 +1,7 @@
-allCollections = []
-
 for idGeneration in ['STRING', 'MONGO']
   do (idGeneration) ->
+    allCollections = []
+
     if idGeneration is 'STRING'
       generateId = ->
         Random.id()
@@ -10,12 +10,13 @@ for idGeneration in ['STRING', 'MONGO']
         new Meteor.Collection.ObjectID()
 
     Users = new Mongo.Collection "Users_meteor_reactivepublish_tests_#{idGeneration}", {idGeneration}
-    allCollections.push Users
     Posts = new Mongo.Collection "Posts_meteor_reactivepublish_tests_#{idGeneration}", {idGeneration}
-    allCollections.push Posts
     Addresses = new Mongo.Collection "Addresses_meteor_reactivepublish_tests_#{idGeneration}", {idGeneration}
-    allCollections.push Addresses
     Fields = new Mongo.Collection "Fields_meteor_reactivepublish_tests_#{idGeneration}", {idGeneration}
+
+    allCollections.push Users
+    allCollections.push Posts
+    allCollections.push Addresses
     allCollections.push Fields
 
     if Meteor.isServer
@@ -902,31 +903,26 @@ for idGeneration in ['STRING', 'MONGO']
           @assertEqual LocalCollection.find({}).count(), 15
       ]
 
-      multiplexerCountBefore = 0
-      multiplexerCountAfter = 0
-      @unblockedPub: (publishName) -> [
+      testClientUnblockedPublish: [
         @runOnServer ->
-          multiplexerCountBefore = 0
-          for collection in allCollections
-            if collection
-              multiplexerCountBefore += Object.keys(collection._driver.mongo._observeMultiplexers).length
+          @multiplexerCountBefore = 0
+          for collection in allCollections when collection
+            @multiplexerCountBefore += Object.keys(collection._driver.mongo._observeMultiplexers).length
+      ,
         ->
           @userId = generateId()
-          handle = @subscribe "#{publishName}_#{idGeneration}", @userId
-          subscriptionId = handle.subscriptionId
+          handle = @subscribe "unblocked-users-posts_#{idGeneration}", @userId
           handle?.stop()
 
           Meteor.setTimeout @expect(), 1000 # ms
       ,
         @runOnServer ->
           multiplexerCountAfter = 0
-          for collection in allCollections
-            if collection
-              multiplexerCountAfter += Object.keys(collection._driver.mongo._observeMultiplexers).length
-          @assertEqual multiplexerCountBefore, multiplexerCountAfter
-      ]
+          for collection in allCollections when collection
+            multiplexerCountAfter += Object.keys(collection._driver.mongo._observeMultiplexers).length
 
-      testClientUnblockedBasicAutorun: @unblockedPub 'unblocked-users-posts'
+          @assertEqual @multiplexerCountBefore, multiplexerCountAfter
+      ]
 
     # Register the test case.
     ClassyTestCase.addTest new ReactivePublishTestCase()
