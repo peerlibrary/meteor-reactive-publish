@@ -185,7 +185,13 @@ extendPublish (name, publishFunction, options) ->
     # and that you can return cursors from the function which would be automatically published.
     publish.autorun = (runFunc) ->
       handle = Tracker.autorun (computation) ->
-        result = runFunc.call publish, computation
+        try
+          result = runFunc.call publish, computation
+        catch e
+          if computation.firstRun
+            throw e
+          else
+            publish.error(e)
 
         collectionNames = getCollectionNames result
         allCollectionNames[computation._id] = collectionNames
