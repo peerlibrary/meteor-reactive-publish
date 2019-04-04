@@ -926,3 +926,40 @@ for idGeneration in ['STRING', 'MONGO']
 
     # Register the test case.
     ClassyTestCase.addTest new ReactivePublishTestCase()
+
+if Meteor.isServer
+  Meteor.publish "initial error", () -> 
+    @autorun () =>
+      throw new Meteor.Error('triggered error')
+
+  Meteor.publish "rereun error", () ->
+    reactiveError = new ReactiveVar false
+
+    @autorun () =>
+      if reactiveError.get()
+        throw new Meteor.Error('triggered error')
+
+    setTimeout (-> reactiveError.set(true)), 1000
+    @ready()
+
+class ReactivePublishErrorTests extends ClassyTestCase
+  @testName: "reactivepublish - Errors"
+
+  testClientInitialError: () ->
+      sub = Meteor.subscribe("initial error", {
+        onStop: (error) =>
+          @assertEqual(error.message, '[triggered error]')
+      })
+
+  testClientRerunError: () ->
+    isReady = false
+    Meteor.subscribe("rereun error", {
+      onStop: @expect (error) =>
+        @assertEqual(isReady, true, 'received error on rerun')
+        @assertEqual(error.message, '[triggered error]')
+      onReady: () =>
+        isReady = true
+    })
+
+ClassyTestCase.addTest new ReactivePublishErrorTests
+
