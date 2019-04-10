@@ -18,6 +18,14 @@ checkNames = (publish, allCollectionNames, id, collectionNames) ->
 
   true
 
+iterateObjectOrMapKeys = (objectOrMap, fn) ->
+  if (objectOrMap instanceof Map)
+    for [ key ] from objectOrMap
+      fn(key)
+  else
+    for key of objectOrMap
+      fn(key)
+
 wrapCallbacks = (callbacks, initializingReference) ->
   # If observeChanges is called inside a reactive context we have to make extra effort to pass the computation to the
   # observeChanges callbacks so that the computation is available to the "added" publish method, if it is called. We use
@@ -98,8 +106,12 @@ extendPublish (name, publishFunction, options) ->
 
         computation.afterRun =>
           # We remove those which are not published anymore.
-          for collectionName of @_documents
-            currentlyPublishedDocumentIds = _.keys(@_documents[collectionName] or {})
+          iterateObjectOrMapKeys @_documents, (collectionName) =>
+            if @_documents instanceof Map
+              currentlyPublishedDocumentIds = Array.from(@_documents.get(collectionName))
+            else
+              currentlyPublishedDocumentIds = _.keys(@_documents[collectionName] or {})
+
             currentComputationAddedDocumentIds = _.keys(documents[computation._id]?[collectionName] or {})
             # If afterRun for other autoruns in the publish function have not yet run, we have to look in "documents" as well.
             otherComputationsAddedDocumentsIds = _.union (_.keys(docs[collectionName] or {}) for computationId, docs of documents when computationId isnt "#{computation._id}")...
@@ -136,14 +148,21 @@ extendPublish (name, publishFunction, options) ->
       # This can hide some errors in publish functions if they one calls "added" on an existing document and we could
       # make it so that this behavior works only inside reactive computation (if "currentComputation" is set), but we
       # can also make it so that publish function tries to do something smarter (sending a diff) in all cases, as we do.
-      if @_documents[collectionName]?[stringId]
+      if ((@_documents instanceof Map && @_documents.get(collectionName)?.has(stringId)) || @_documents[collectionName]?[stringId])
         oldFields = {}
         # If some field existed before, but does not exist anymore, we have to remove it by calling "changed"
         # with value set to "undefined". So we look into current session's state and see which fields are currently
         # known and create an object of same fields, just all values set to "undefined". We then override some fields
         # with new values. Only top-level fields matter.
-        for field of @_session.getCollectionView(collectionName)?.documents?[stringId]?.dataByKey or {}
+        _documents = @_session.getCollectionView(collectionName)?.documents or {}
+        if _documents instanceof Map
+          dataByKey = _documents.get(stringId)?.dataByKey or {}
+        else
+          dataByKey = _documents?[stringId]?.dataByKey or {}
+
+        iterateObjectOrMapKeys dataByKey, (field) =>
           oldFields[field] = undefined
+
         @changed collectionName, id, _.extend oldFields, fields
       else
         originalAdded.call @, collectionName, id, fields
