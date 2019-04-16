@@ -204,10 +204,10 @@ for idGeneration in ['STRING', 'MONGO']
 
           @ready()
 
-      currentTime = new ReactiveVar new Date().valueOf()
+      currentTime = new ReactiveVar Date.now()
 
       Meteor.setInterval ->
-        currentTime.set new Date().valueOf()
+        currentTime.set Date.now()
         # Using 1 ms to stress-test the system. In practice you should be using a much larger interval.
       , 1 # ms
 
@@ -757,18 +757,18 @@ for idGeneration in ['STRING', 'MONGO']
               $exists: true
           ).observeChanges
             added: (id, fields) =>
-              @changes.push {added: id, timestamp: new Date().valueOf()}
+              @changes.push {added: id, timestamp: Date.now()}
             changes: (id, fields) =>
               @assertFail()
             removed: (id) =>
-              @changes.push {removed: id, timestamp: new Date().valueOf()}
+              @changes.push {removed: id, timestamp: Date.now()}
         ->
           @assertEqual Posts.find(timestamp: $exists: true).fetch(), []
 
           @posts = []
 
           for i in [0...10]
-            timestamp =  new Date().valueOf() + i * 91 # ms
+            timestamp =  Date.now() + i * 91 # ms
             do (timestamp) =>
               # We use a method to not have any client-side simulation which can
               # interfere with the observation of the Posts collection.

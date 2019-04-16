@@ -52,10 +52,10 @@ Meteor.publish('subscribed-posts', function () {
 You can make queries which are based on time:
 
 ```javascript
-var currentTime = new ReactiveVar(new Date().valueOf());
+var currentTime = new ReactiveVar(Date.now());
 
 Meteor.setInterval(function () {
-  currentTime.set(new Date().valueOf());
+  currentTime.set(Date.now());
 }, 1000); // ms
 
 Meteor.publish('recent-posts', function () {
