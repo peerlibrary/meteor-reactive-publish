@@ -154,11 +154,12 @@ extendPublish (name, publishFunction, options) ->
         # with value set to "undefined". So we look into current session's state and see which fields are currently
         # known and create an object of same fields, just all values set to "undefined". We then override some fields
         # with new values. Only top-level fields matter.
-        _documents = @_session.getCollectionView(collectionName)?.documents or {}
-        if _documents instanceof Map
-          dataByKey = _documents.get(stringId)?.dataByKey or {}
-        else
-          dataByKey = _documents?[stringId]?.dataByKey or {}
+        if @_session
+          _documents = @_session.getCollectionView(collectionName)?.documents or {}
+          if _documents instanceof Map
+            dataByKey = _documents.get(stringId)?.dataByKey or {}
+          else
+            dataByKey = _documents?[stringId]?.dataByKey or {}
 
         iterateObjectOrMapKeys dataByKey, (field) =>
           oldFields[field] = undefined
