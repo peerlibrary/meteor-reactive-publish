@@ -1,6 +1,6 @@
 Package.describe({
   summary: "Reactive publish endpoints",
-  version: '0.8.0',
+  version: '0.8.1',
   name: 'peerlibrary:reactive-publish',
   git: 'https://github.com/peerlibrary/meteor-reactive-publish.git'
 });
