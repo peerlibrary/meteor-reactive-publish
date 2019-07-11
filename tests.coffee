@@ -1,4 +1,4 @@
-ReactiveVar = require 'meteor/reactive-var'
+{ ReactiveVar } = require 'meteor/reactive-var'
 
 for idGeneration in ['STRING', 'MONGO']
   do (idGeneration) ->
