@@ -1,16 +1,16 @@
 Package.describe({
   summary: "Reactive publish endpoints",
-  version: '0.8.1',
+  version: '0.9.0',
   name: 'peerlibrary:reactive-publish',
   git: 'https://github.com/peerlibrary/meteor-reactive-publish.git'
 });
 
 Package.onUse(function (api) {
-  api.versionsFrom('METEOR@1.4.4.5');
+  api.versionsFrom('METEOR@1.8.1');
 
   // Core dependencies.
   api.use([
-    'coffeescript@2.0.3_3',
+    'coffeescript@2.4.1',
     'ecmascript',
     'mongo',
     'minimongo',
@@ -19,9 +19,9 @@ Package.onUse(function (api) {
 
   // 3rd party dependencies.
   api.use([
-    'peerlibrary:server-autorun@0.7.1',
-    'peerlibrary:reactive-mongo@0.3.0',
-    'peerlibrary:extend-publish@0.5.0'
+    'peerlibrary:server-autorun@0.8.0',
+    'peerlibrary:reactive-mongo@0.4.0',
+    'peerlibrary:extend-publish@0.6.0'
   ], 'server');
 
   api.addFiles([
@@ -30,11 +30,11 @@ Package.onUse(function (api) {
 });
 
 Package.onTest(function (api) {
-  api.versionsFrom('METEOR@1.4.4.5');
+  api.versionsFrom('METEOR@1.8.1');
 
   // Core dependencies.
   api.use([
-    'coffeescript@2.0.3_3',
+    'coffeescript@2.4.1',
     'ecmascript',
     'insecure',
     'random',
@@ -51,13 +51,13 @@ Package.onTest(function (api) {
 
   // 3rd party dependencies.
   api.use([
-    'peerlibrary:assert@0.2.5',
-    'peerlibrary:server-autorun@0.7.1',
-    'peerlibrary:classy-test@0.3.0',
+    'peerlibrary:assert@0.3.0',
+    'peerlibrary:server-autorun@0.8.0',
+    'peerlibrary:classy-test@0.4.0',
     'lamhieu:unblock@1.0.0'
   ]);
 
-  api.add_files([
+  api.addFiles([
     'tests.coffee'
   ]);
 });

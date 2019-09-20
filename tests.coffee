@@ -332,7 +332,7 @@ for idGeneration in ['STRING', 'MONGO']
               @assertTrue id
               @posts.push id
 
-          Meteor.setTimeout @expect(), 200 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
       ,
         ->
           @assertEqual Posts.find().fetch(), []
@@ -347,7 +347,7 @@ for idGeneration in ['STRING', 'MONGO']
               @assertTrue userId
               @assertEqual userId, @userId
 
-          Meteor.setTimeout @expect(), 200 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
       ,
         ->
           Posts.find().forEach (post) =>
@@ -364,7 +364,7 @@ for idGeneration in ['STRING', 'MONGO']
               @assertFalse error, error?.toString?() or error
               @assertEqual count, 1
 
-          Meteor.setTimeout @expect(), 200 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
       ,
         ->
           Posts.find().forEach (post) =>
@@ -379,7 +379,7 @@ for idGeneration in ['STRING', 'MONGO']
               @assertFalse error, error?.toString?() or error
               @assertEqual count, 1
 
-          Meteor.setTimeout @expect(), 200 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
       ,
         ->
           @assertItemsEqual _.pluck(Posts.find().fetch(), '_id'), []
@@ -392,7 +392,7 @@ for idGeneration in ['STRING', 'MONGO']
               @assertFalse error, error?.toString?() or error
               @assertEqual count, 1
 
-          Meteor.setTimeout @expect(), 200 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
       ,
         ->
           Posts.find().forEach (post) =>
@@ -404,7 +404,7 @@ for idGeneration in ['STRING', 'MONGO']
             @assertFalse error, error?.toString?() or error
             @assertEqual count, 1
 
-          Meteor.setTimeout @expect(), 200 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
       ,
         ->
           Posts.find().forEach (post) =>
@@ -416,7 +416,7 @@ for idGeneration in ['STRING', 'MONGO']
             @expect (error) =>
               @assertFalse error, error?.toString?() or error
 
-          Meteor.setTimeout @expect(), 200 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
       ,
         ->
           @assertItemsEqual _.pluck(Posts.find().fetch(), '_id'), []
@@ -451,7 +451,7 @@ for idGeneration in ['STRING', 'MONGO']
               @assertTrue id
               @posts.push id
 
-          Meteor.setTimeout @expect(), 200 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
       ,
         ->
           @assertEqual Posts.find().fetch(), []
@@ -466,7 +466,7 @@ for idGeneration in ['STRING', 'MONGO']
               @assertTrue userId
               @assertEqual userId, @userId
 
-          Meteor.setTimeout @expect(), 200 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
       ,
         ->
           Posts.find().forEach (post) =>
@@ -482,7 +482,7 @@ for idGeneration in ['STRING', 'MONGO']
               @assertFalse error, error?.toString?() or error
               @assertEqual count, 1
 
-          Meteor.setTimeout @expect(), 200 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
       ,
         ->
           Posts.find().forEach (post) =>
@@ -544,7 +544,7 @@ for idGeneration in ['STRING', 'MONGO']
             @assertTrue id
             @postId = id
 
-          Meteor.setTimeout @expect(), 200 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
       ,
         ->
           @assertEqual Posts.find().fetch(), []
@@ -558,7 +558,7 @@ for idGeneration in ['STRING', 'MONGO']
               @assertTrue userId
               @assertEqual userId, @userId
 
-          Meteor.setTimeout @expect(), 200 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
       ,
         ->
           @assertItemsEqual Posts.find().fetch(), [
@@ -575,7 +575,7 @@ for idGeneration in ['STRING', 'MONGO']
               @assertFalse error, error?.toString?() or error
               @assertEqual count, 1
 
-          Meteor.setTimeout @expect(), 200 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
       ,
         ->
           @assertItemsEqual Posts.find().fetch(), [
@@ -592,7 +592,7 @@ for idGeneration in ['STRING', 'MONGO']
               @assertFalse error, error?.toString?() or error
               @assertEqual count, 1
 
-          Meteor.setTimeout @expect(), 200 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
       ,
         ->
           @assertItemsEqual Posts.find().fetch(), [
@@ -608,7 +608,7 @@ for idGeneration in ['STRING', 'MONGO']
               @assertFalse error, error?.toString?() or error
               @assertEqual count, 1
 
-          Meteor.setTimeout @expect(), 200 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
       ,
         ->
           @assertItemsEqual Posts.find().fetch(), [
@@ -625,7 +625,7 @@ for idGeneration in ['STRING', 'MONGO']
               @assertFalse error, error?.toString?() or error
               @assertEqual count, 1
 
-          Meteor.setTimeout @expect(), 200 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
       ,
         ->
           @assertItemsEqual Posts.find().fetch(), [
@@ -667,7 +667,7 @@ for idGeneration in ['STRING', 'MONGO']
               @assertTrue id
               @addresses.push id
 
-          Meteor.setTimeout @expect(), 200 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
       ,
         ->
           @assertEqual Posts.find().fetch(), []
@@ -683,7 +683,7 @@ for idGeneration in ['STRING', 'MONGO']
               @assertTrue userId
               @assertEqual userId, @userId
 
-          Meteor.setTimeout @expect(), 200 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
       ,
         ->
           @assertItemsEqual _.pluck(Posts.find().fetch(), '_id'), @posts
@@ -697,7 +697,7 @@ for idGeneration in ['STRING', 'MONGO']
               @assertFalse error, error?.toString?() or error
               @assertEqual count, 1
 
-          Meteor.setTimeout @expect(), 200 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
       ,
         ->
           @assertItemsEqual _.pluck(Posts.find().fetch(), '_id'), @posts[0..5]
@@ -711,7 +711,7 @@ for idGeneration in ['STRING', 'MONGO']
               @assertFalse error, error?.toString?() or error
               @assertEqual count, 1
 
-          Meteor.setTimeout @expect(), 200 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
       ,
         ->
           @assertItemsEqual _.pluck(Posts.find().fetch(), '_id'), @posts[0..5]
@@ -725,7 +725,7 @@ for idGeneration in ['STRING', 'MONGO']
               @assertFalse error, error?.toString?() or error
               @assertEqual count, 1
 
-          Meteor.setTimeout @expect(), 200 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
       ,
         ->
           @assertItemsEqual _.pluck(Posts.find().fetch(), '_id'), @posts[0..5]
@@ -735,7 +735,7 @@ for idGeneration in ['STRING', 'MONGO']
             @assertFalse error, error?.toString?() or error
             @assertEqual count, 1
 
-          Meteor.setTimeout @expect(), 200 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
       ,
         ->
           @assertItemsEqual _.pluck(Posts.find().fetch(), '_id'), []
@@ -780,7 +780,7 @@ for idGeneration in ['STRING', 'MONGO']
                   timestamp: timestamp
 
           # We have to wait for all posts to be inserted and pushed to the client.
-          Meteor.setTimeout @expect(), 300 # ms
+          Meteor.setTimeout @expect(), 1000 # ms
         ->
           @posts = _.sortBy @posts, 'timestamp'
 
