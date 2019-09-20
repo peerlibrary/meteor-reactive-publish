@@ -185,19 +185,22 @@ extendPublish (name, publishFunction, options) ->
     # and that you can return cursors from the function which would be automatically published.
     publish.autorun = (runFunc) ->
       handle = Tracker.autorun (computation) ->
+        computation.onInvalidate ->
+          delete allCollectionNames[computation._id]
+
         try
           result = runFunc.call publish, computation
-        catch e
+        catch error
+          computation.stop()
+
           if computation.firstRun
-            throw e
+            throw error
           else
-            publish.error(e)
+            publish.error(error)
+            return
 
         collectionNames = getCollectionNames result
         allCollectionNames[computation._id] = collectionNames
-
-        computation.onInvalidate ->
-          delete allCollectionNames[computation._id]
 
         unless checkNames publish, allCollectionNames, "#{computation._id}", collectionNames
           computation.stop()
