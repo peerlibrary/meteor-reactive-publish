@@ -51,22 +51,22 @@ wrapCallbacks = (callbacks, initializingReference) ->
   callbacks
 
 originalObserveChanges = MongoInternals.Connection::_observeChanges
-MongoInternals.Connection::_observeChanges = (cursorDescription, ordered, callbacks) ->
+MongoInternals.Connection::_observeChanges = (cursorDescription, ordered, callbacks, nonMutatingCallbacks) ->
   initializing = true
 
   callbacks = wrapCallbacks callbacks, initializing: initializing
 
-  handle = originalObserveChanges.call @, cursorDescription, ordered, callbacks
+  handle = originalObserveChanges.call @, cursorDescription, ordered, callbacks, nonMutatingCallbacks
   initializing = false
   handle
 
 originalLocalCollectionCursorObserveChanges = LocalCollection.Cursor::observeChanges
-LocalCollection.Cursor::observeChanges = (options) ->
+LocalCollection.Cursor::observeChanges = (callbacks, options = {}) ->
   initializing = true
 
-  options = wrapCallbacks options, initializing: initializing
+  callbacks = wrapCallbacks callbacks, initializing: initializing
 
-  handle = originalLocalCollectionCursorObserveChanges.call @, options
+  handle = originalLocalCollectionCursorObserveChanges.call @, callbacks, options
   initializing = false
   handle
 
