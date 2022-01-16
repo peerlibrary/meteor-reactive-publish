@@ -1,0 +1,15 @@
+name: Meteor package
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-20.04
+
+    container: registry.gitlab.com/tozd/docker/meteor-testing:ubuntu-focal-1.12.2
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - run: /run-test-packages.sh
