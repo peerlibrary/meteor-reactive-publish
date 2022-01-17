@@ -6,7 +6,7 @@ jobs:
   test:
     runs-on: ubuntu-20.04
 
-    container: registry.gitlab.com/tozd/docker/meteor-testing:ubuntu-focal-1.12.2
+    container: registry.gitlab.com/tozd/docker/meteor-testing:ubuntu-focal-1.12.1
 
     steps:
       - uses: actions/checkout@v2
